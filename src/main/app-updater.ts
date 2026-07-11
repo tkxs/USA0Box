@@ -5,6 +5,7 @@ import { getSettings } from './store-node'
 import { getLogger } from './util'
 
 const log = getLogger('app-updater')
+const UPDATE_FEED_URL = 'https://github.com/tkxs/USA0Box/releases/latest/download'
 
 function sendToRenderer(win: BrowserWindow | null, channel: string, data?: unknown) {
   if (win && !win.isDestroyed()) {
@@ -95,12 +96,14 @@ export class AppUpdater {
     this.isChecking = true
     try {
       const settings = getSettings()
-      autoUpdater.channel = settings.betaUpdate ? 'beta' : 'latest'
+      if (settings.betaUpdate) {
+        log.info('Beta update channel is not configured; using the latest stable release')
+      }
+      autoUpdater.channel = 'latest'
       autoUpdater.allowDowngrade = false
       autoUpdater.setFeedURL({
-        provider: 'github',
-        owner: 'tkxs',
-        repo: 'USA0Box',
+        provider: 'generic',
+        url: UPDATE_FEED_URL,
       })
       return await autoUpdater.checkForUpdates()
     } finally {

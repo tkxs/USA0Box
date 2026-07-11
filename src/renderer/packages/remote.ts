@@ -1,4 +1,5 @@
 import { ofetch } from 'ofetch'
+import { parse as parseYaml } from 'yaml'
 import { z } from 'zod'
 import { getLogger } from '@/lib/utils'
 import platform from '@/platform'
@@ -155,13 +156,12 @@ export async function checkNeedUpdate(version: string, os: string, config: Confi
 }
 
 export async function getLatestSub0BoxVersion() {
-  const release = await ofetch<{ tag_name?: string }>('https://api.github.com/repos/tkxs/USA0Box/releases/latest', {
+  const metadata = await ofetch<string, 'text'>('https://github.com/tkxs/USA0Box/releases/latest/download/latest.yml', {
     retry: 2,
-    headers: {
-      Accept: 'application/vnd.github+json',
-    },
+    responseType: 'text',
   })
-  return release.tag_name?.replace(/^v/, '') || ''
+  const release = parseYaml(metadata) as { version?: unknown }
+  return typeof release.version === 'string' ? release.version : ''
 }
 
 // export async function getSponsorAd(): Promise<null | SponsorAd> {
