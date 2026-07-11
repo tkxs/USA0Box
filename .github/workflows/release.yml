@@ -63,7 +63,7 @@ jobs:
           path: |
             release/build/*.exe
             release/build/*.blockmap
-            release/build/*.yml
+            release/build/latest*.yml
             release/build/*.dmg
             release/build/*.zip
             release/build/*.AppImage
