@@ -1,0 +1,193 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            target: win
+          - name: macOS
+            os: macos-latest
+            target: mac
+          - name: Linux
+            os: ubuntu-latest
+            target: linux
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Verify tag matches application version
+        shell: bash
+        run: |
+          node -e "const root=require('./package.json').version; const app=require('./release/app/package.json').version; if(root!==app) throw new Error('Package versions must match'); if(process.env.GITHUB_REF_NAME!=='v'+app) throw new Error('Tag must be v'+app)"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm run build
+
+      - name: Package application
+        run: pnpm exec electron-builder --${{ matrix.target }} --publish never
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sub0box-${{ matrix.target }}
+          if-no-files-found: error
+          path: |
+            release/build/*.exe
+            release/build/*.blockmap
+            release/build/*.yml
+            release/build/*.dmg
+            release/build/*.zip
+            release/build/*.AppImage
+            release/build/*.deb
+
+  android:
+    name: Build Android
+    runs-on: ubuntu-latest
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and sync Android
+        run: pnpm run mobile:sync:android
+
+      - name: Build test APK
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: Restore Android signing key
+        if: env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != ''
+        run: |
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/sub0box-release.jks"
+          echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/sub0box-release.jks" >> "$GITHUB_ENV"
+
+      - name: Build signed APK and AAB
+        if: env.ANDROID_KEYSTORE_PATH != ''
+        working-directory: android
+        run: ./gradlew assembleRelease bundleRelease
+
+      - name: Collect Android artifacts
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          mkdir -p mobile-artifacts
+          cp android/app/build/outputs/apk/debug/app-debug.apk "mobile-artifacts/Sub0Box-${VERSION}-android-debug.apk"
+          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk "mobile-artifacts/Sub0Box-${VERSION}-android.apk"
+          fi
+          if [ -f android/app/build/outputs/bundle/release/app-release.aab ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab "mobile-artifacts/Sub0Box-${VERSION}-android.aab"
+          fi
+
+      - name: Upload Android artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sub0box-android
+          if-no-files-found: error
+          path: mobile-artifacts/*
+
+  ios:
+    name: Validate iOS build
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and sync iOS
+        run: pnpm run mobile:sync:ios
+
+      - name: Build iOS Simulator application
+        run: |
+          xcodebuild \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath ios/build \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+  release:
+    name: Publish GitHub Release
+    needs: [build, android, ios]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: sub0box-*
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: artifacts/**/*

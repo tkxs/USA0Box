@@ -15,7 +15,6 @@ function sendToRenderer(win: BrowserWindow | null, channel: string, data?: unkno
 export class AppUpdater {
   private getWindow: () => BrowserWindow | null
   private isChecking = false
-  private suppressError = false
 
   constructor(getWindow: () => BrowserWindow | null) {
     this.getWindow = getWindow
@@ -52,19 +51,15 @@ export class AppUpdater {
 
     autoUpdater.on('error', (err) => {
       log.error('auto_updater error:', err)
-      // Suppress error events during feed URL fallback to avoid false error flashes
-      if (!this.suppressError) {
-        sendToRenderer(this.getWindow(), 'updater:error', { message: err?.message || 'Unknown error' })
-      }
+      sendToRenderer(this.getWindow(), 'updater:error', { message: err?.message || 'Unknown error' })
     })
 
-    // Guard against double-registration (defensive — AppUpdater is singleton)
     ipcMain.removeHandler('updater:check')
     ipcMain.handle('updater:check', async () => {
       if (this.isChecking) return { started: false }
       try {
         const result = await this.tryUpdate()
-        // electron-updater returns null without firing events in dev mode or when all URLs fail
+        // electron-updater returns null without firing events in development mode.
         if (!result) sendToRenderer(this.getWindow(), 'updater:not-available')
       } catch (e) {
         log.error('auto_updater: check failed', e)
@@ -99,39 +94,17 @@ export class AppUpdater {
 
     this.isChecking = true
     try {
-      const feedUrls = [
-        'https://chatboxai.app/api/auto_upgrade',
-        'https://api.chatboxai.app/api/auto_upgrade',
-        'https://api.ai-chatbox.com/api/auto_upgrade',
-        'https://api.chatboxapp.xyz/api/auto_upgrade',
-        'https://api.chatboxai.com/api/auto_upgrade',
-      ]
-
       const settings = getSettings()
       autoUpdater.channel = settings.betaUpdate ? 'beta' : 'latest'
       autoUpdater.allowDowngrade = false
-
-      let lastError: Error | null = null
-      for (const url of feedUrls) {
-        try {
-          autoUpdater.setFeedURL(url)
-          // Suppress error events from failed URLs — only the final error matters
-          this.suppressError = true
-          const result = await autoUpdater.checkForUpdates()
-          this.suppressError = false
-          return result
-        } catch (e) {
-          lastError = e instanceof Error ? e : new Error(String(e))
-          log.error(`auto_updater: attempt failed: ${url}. `, e)
-        }
-      }
-      this.suppressError = false
-      // All URLs failed — throw so callers handle it (don't return null, which would be misread as "no update")
-      if (lastError) throw lastError
-      return null
+      autoUpdater.setFeedURL({
+        provider: 'github',
+        owner: 'tkxs',
+        repo: 'USA0Box',
+      })
+      return await autoUpdater.checkForUpdates()
     } finally {
       this.isChecking = false
-      this.suppressError = false
     }
   }
 }

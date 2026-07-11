@@ -52,8 +52,14 @@ export default function useVersion() {
       const version = await platform.getVersion()
       _setVersion(version)
       try {
-        const os = await platform.getPlatform()
-        const needUpdate = await remote.checkNeedUpdate(version, os, config, settings)
+        let needUpdate: boolean
+        if (platform.type === 'mobile') {
+          const latestVersion = await remote.getLatestSub0BoxVersion()
+          needUpdate = !!latestVersion && compareVersions(version, latestVersion) === -1
+        } else {
+          const os = await platform.getPlatform()
+          needUpdate = await remote.checkNeedUpdate(version, os, config, settings)
+        }
         setNeedCheckUpdate(needUpdate)
       } catch (e) {
         console.error('Failed to check for updates:', e)

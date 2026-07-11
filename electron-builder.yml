@@ -1,5 +1,5 @@
-productName: Chatbox
-appId: xyz.chatboxapp.app
+productName: Sub0Box
+appId: com.tkxs.sub0box
 asar: true
 asarUnpack:
   - "**\\*.{node,dll}"
@@ -51,10 +51,6 @@ win:
         - arm64
   verifyUpdateCodeSignature: false
   artifactName: ${productName}-${version}-Setup.${ext}
-  signtoolOptions:
-    sign: ./custom_win_sign.js
-    signingHashAlgorithms:
-      - sha256
 
 nsis:
   oneClick: false
@@ -83,8 +79,7 @@ extraResources:
   - ./assets/**
 
 publish:
-  - provider: s3
-    bucket: chatbox
-    endpoint: https://208624959c9d215edea0720162a740c1.r2.cloudflarestorage.com
-    path: /releases
-    channel: ${env.UPDATE_CHANNEL}
+  - provider: github
+    owner: tkxs
+    repo: USA0Box
+    channel: latest

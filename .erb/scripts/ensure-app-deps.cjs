@@ -29,7 +29,7 @@ exports.default = async function ensureAppDeps(context) {
   execSync('npm install --production --ignore-scripts', {
     cwd: appDir,
     stdio: 'inherit',
-    env: { ...process.env, npm_config_registry: 'https://registry.npmmirror.com' },
+    env: { ...process.env, npm_config_registry: process.env.npm_config_registry || 'https://registry.npmjs.org' },
   })
 
   // Remove type-only packages that are not needed at runtime.

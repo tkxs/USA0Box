@@ -154,6 +154,16 @@ export async function checkNeedUpdate(version: string, os: string, config: Confi
   return !!res.need_update
 }
 
+export async function getLatestSub0BoxVersion() {
+  const release = await ofetch<{ tag_name?: string }>('https://api.github.com/repos/tkxs/USA0Box/releases/latest', {
+    retry: 2,
+    headers: {
+      Accept: 'application/vnd.github+json',
+    },
+  })
+  return release.tag_name?.replace(/^v/, '') || ''
+}
+
 // export async function getSponsorAd(): Promise<null | SponsorAd> {
 //     type Response = {
 //         data: null | SponsorAd
