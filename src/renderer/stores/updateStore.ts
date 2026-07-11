@@ -1,5 +1,5 @@
-import { create } from 'zustand'
 import { t } from 'i18next'
+import { create } from 'zustand'
 import platform from '@/platform'
 
 export type UpdateStatus = 'idle' | 'checking' | 'up-to-date' | 'available' | 'downloading' | 'downloaded' | 'error'
@@ -10,6 +10,7 @@ interface UpdateState {
   version: string | null
   error: string | null
   dismissedVersion: string | null
+  installOnDownload: boolean
 }
 
 interface UpdateActions {
@@ -22,6 +23,7 @@ export const useUpdateStore = create<UpdateState & UpdateActions>((set, get) => 
   version: null,
   error: null,
   dismissedVersion: null,
+  installOnDownload: false,
 
   dismiss() {
     set({ dismissedVersion: get().version })
@@ -32,6 +34,35 @@ export function installUpdate() {
   platform.installUpdate().catch(() => {
     useUpdateStore.setState({ status: 'error', error: t('Update failed') })
   })
+}
+
+export function completeUpdateDownload(data: { version: string }) {
+  const { dismissedVersion, installOnDownload } = useUpdateStore.getState()
+  useUpdateStore.setState({
+    status: 'downloaded',
+    version: data.version,
+    progress: 100,
+    dismissedVersion: dismissedVersion === data.version ? dismissedVersion : null,
+    installOnDownload: false,
+  })
+  if (installOnDownload) installUpdate()
+}
+
+export async function requestUpdateInstall() {
+  const { status } = useUpdateStore.getState()
+  if (status === 'downloaded') {
+    installUpdate()
+    return
+  }
+
+  useUpdateStore.setState({ installOnDownload: true })
+  if ((status === 'idle' || status === 'error' || status === 'up-to-date') && platform.checkForUpdate) {
+    try {
+      await platform.checkForUpdate()
+    } catch {
+      useUpdateStore.setState({ status: 'error', error: t('Update failed') })
+    }
+  }
 }
 
 let initialized = false
@@ -65,14 +96,14 @@ export function initUpdateListeners() {
     platform.onUpdaterNotAvailable(() => {
       const { status } = useUpdateStore.getState()
       if (status === 'checking') {
-        useUpdateStore.setState({ status: 'up-to-date' })
+        useUpdateStore.setState({ status: 'up-to-date', installOnDownload: false })
         setTimeout(() => {
           if (useUpdateStore.getState().status === 'up-to-date') {
             useUpdateStore.setState({ status: 'idle' })
           }
         }, 3_000)
       } else if (status !== 'idle') {
-        useUpdateStore.setState({ status: 'idle' })
+        useUpdateStore.setState({ status: 'idle', installOnDownload: false })
       }
     })
   }
@@ -86,15 +117,7 @@ export function initUpdateListeners() {
   }
 
   if (platform.onUpdaterDownloaded) {
-    platform.onUpdaterDownloaded((data) => {
-      const { dismissedVersion } = useUpdateStore.getState()
-      useUpdateStore.setState({
-        status: 'downloaded',
-        version: data.version,
-        progress: 100,
-        dismissedVersion: dismissedVersion === data.version ? dismissedVersion : null,
-      })
-    })
+    platform.onUpdaterDownloaded(completeUpdateDownload)
   }
 
   if (platform.onUpdaterError) {

@@ -4,6 +4,7 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import Toasts from '@/components/common/Toasts'
 import DesktopDownloadReminder from '@/components/layout/DesktopDownloadReminder'
 import ExitFullscreenButton from '@/components/layout/ExitFullscreenButton'
+import UpdateAnnouncementModal from '@/components/update/UpdateAnnouncementModal'
 import useAppTheme from '@/hooks/useAppTheme'
 import { useSystemLanguageWhenInit } from '@/hooks/useDefaultSystemLanguage'
 import { useI18nEffect } from '@/hooks/useI18nEffect'
@@ -135,13 +136,12 @@ function BackgroundImageOverlay() {
 }
 
 function Root() {
-  const { isExceeded, isExceededResolved } = useVersion()
+  const versionState = useVersion()
+  const { isExceeded, isExceededResolved } = versionState
   const location = useLocation()
   const spellCheck = useSettingsStore((state) => state.spellCheck)
   const language = useLanguage()
   const initialized = useRef(false)
-
-  const setOpenAboutDialog = useUIStore((s) => s.setOpenAboutDialog)
 
   const setRemoteConfig = useSetAtom(atoms.remoteConfigAtom)
 
@@ -190,15 +190,8 @@ function Root() {
         return
       }
 
-      // 是否需要弹出关于窗口（更新后首次启动）
-      // 目前仅在桌面版本更新后首次启动、且网络环境为"外网"的情况下才自动弹窗
-      const shouldShowAboutDialogWhenStartUp = await platform.shouldShowAboutDialogWhenStartUp()
-      if (shouldShowAboutDialogWhenStartUp && remoteConfig.setting_chatboxai_first) {
-        setOpenAboutDialog(true)
-        return
-      }
     })()
-  }, [setOpenAboutDialog, setRemoteConfig, location.pathname, isExceeded, isExceededResolved])
+  }, [setRemoteConfig, location.pathname, isExceeded, isExceededResolved])
 
   const showSidebar = useUIStore((s) => s.showSidebar)
   const sidebarWidth = useSidebarWidth()
@@ -322,6 +315,10 @@ function Root() {
   return (
     <Box className="box-border App relative" spellCheck={spellCheck} dir={language === 'ar' ? 'rtl' : 'ltr'}>
       <BackgroundImageOverlay />
+      <UpdateAnnouncementModal
+        latestVersion={versionState.latestVersion}
+        needCheckUpdate={versionState.needCheckUpdate}
+      />
       {platform.type === 'desktop' && (getOS() === 'Windows' || getOS() === 'Linux') && <ExitFullscreenButton />}
       <Grid container className="h-full relative z-[1]">
         <Sidebar />

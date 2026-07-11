@@ -31,6 +31,7 @@ export function isFirstDay(): boolean {
 export default function useVersion() {
   const remoteConfig = useAtomValue(remoteConfigAtom)
   const [version, _setVersion] = useState('')
+  const [latestVersion, setLatestVersion] = useState('')
   const [needCheckUpdate, setNeedCheckUpdate] = useState(false)
   const isStoreReviewPlatform =
     CHATBOX_BUILD_PLATFORM === 'ios' ||
@@ -42,7 +43,7 @@ export default function useVersion() {
       version &&
       remoteConfig.current_version &&
       compareVersions(version, remoteConfig.current_version) === 1,
-    [version, remoteConfig]
+    [version, remoteConfig, isStoreReviewPlatform]
   )
   const updateCheckTimer = useRef<NodeJS.Timeout>()
   useEffect(() => {
@@ -51,13 +52,14 @@ export default function useVersion() {
       _setVersion(version)
       try {
         const latestVersion = await remote.getLatestSub0BoxVersion()
+        setLatestVersion(latestVersion)
         const needUpdate = !!latestVersion && compareVersions(version, latestVersion) === -1
         setNeedCheckUpdate(needUpdate)
       } catch (e) {
         console.error('Failed to check for updates:', e)
       }
     }
-    handler()
+    void handler()
     updateCheckTimer.current = setInterval(handler, 2 * 60 * 60 * 1000)
     return () => {
       if (updateCheckTimer.current) {
@@ -75,6 +77,7 @@ export default function useVersion() {
 
   return {
     version,
+    latestVersion,
     versionLoaded: !!version,
     isExceeded,
     isExceededResolved,

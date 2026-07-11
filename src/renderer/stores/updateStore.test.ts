@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useUpdateStore } from './updateStore'
+import platform from '@/platform'
+import { completeUpdateDownload, requestUpdateInstall, useUpdateStore } from './updateStore'
 
 function resetStore() {
   useUpdateStore.setState({
@@ -8,6 +9,7 @@ function resetStore() {
     version: null,
     error: null,
     dismissedVersion: null,
+    installOnDownload: false,
   })
 }
 
@@ -28,6 +30,7 @@ describe('updateStore', () => {
       expect(state.version).toBeNull()
       expect(state.error).toBeNull()
       expect(state.dismissedVersion).toBeNull()
+      expect(state.installOnDownload).toBe(false)
     })
   })
 
@@ -110,6 +113,31 @@ describe('updateStore', () => {
     it('sets dismissedVersion to null when no version', () => {
       useUpdateStore.getState().dismiss()
       expect(useUpdateStore.getState().dismissedVersion).toBeNull()
+    })
+  })
+
+  describe('install after download', () => {
+    it('records install intent while the update is downloading', async () => {
+      useUpdateStore.setState({ status: 'downloading' })
+
+      await requestUpdateInstall()
+
+      expect(useUpdateStore.getState().installOnDownload).toBe(true)
+    })
+
+    it('installs immediately when a requested download completes', () => {
+      const installSpy = vi.spyOn(platform, 'installUpdate').mockResolvedValue()
+      useUpdateStore.setState({ status: 'downloading', installOnDownload: true })
+
+      completeUpdateDownload({ version: '2.0.0' })
+
+      expect(installSpy).toHaveBeenCalledOnce()
+      expect(useUpdateStore.getState()).toMatchObject({
+        status: 'downloaded',
+        version: '2.0.0',
+        progress: 100,
+        installOnDownload: false,
+      })
     })
   })
 

@@ -145,6 +145,13 @@ export async function getLatestSub0BoxVersion() {
   return typeof release.version === 'string' ? release.version : ''
 }
 
+export async function getLatestSub0BoxReleaseNotes() {
+  return await ofetch<string, 'text'>('https://github.com/tkxs/USA0Box/releases/latest/download/RELEASE_NOTES.md', {
+    retry: 2,
+    responseType: 'text',
+  })
+}
+
 // export async function getSponsorAd(): Promise<null | SponsorAd> {
 //     type Response = {
 //         data: null | SponsorAd
