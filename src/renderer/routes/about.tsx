@@ -22,10 +22,9 @@ import {
   IconMessage2,
   IconPencil,
   IconRefresh,
-  IconX,
 } from '@tabler/icons-react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Fragment, type ReactElement, useState } from 'react'
+import { Fragment, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import BrandGithub from '@/components/icons/BrandGithub'
@@ -34,11 +33,9 @@ import BrandWechat from '@/components/icons/BrandWechat'
 import Page from '@/components/layout/Page'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import useVersion from '@/hooks/useVersion'
-import { buildChatboxUrl } from '@/packages/remote'
 import platform from '@/platform'
 import iconPNG from '@/static/icon.png'
 import IMG_WECHAT_QRCODE from '@/static/wechat_qrcode.png'
-import { useLanguage } from '@/stores/settingsStore'
 import { installUpdate, useUpdateStore } from '@/stores/updateStore'
 
 export const Route = createFileRoute('/about')({
@@ -48,7 +45,6 @@ export const Route = createFileRoute('/about')({
 function RouteComponent() {
   const { t, i18n: _i18n } = useTranslation()
   const version = useVersion()
-  const language = useLanguage()
   const isSmallScreen = useIsSmallScreen()
 
   return (
@@ -59,8 +55,8 @@ function RouteComponent() {
             <Image h={100} w={100} mah={'20vw'} maw={'20vw'} src={iconPNG} />
             <Stack flex={1} gap="xxs">
               <Flex justify="space-between" align="center" wrap="wrap" gap={isSmallScreen ? 'xs' : 'sm'} rowGap="xs">
-                <Title order={5} lh={1.5} lineClamp={1} title={`Sub0Box v${version.version}`}>
-                  Sub0Box {/\d/.test(version.version) ? `(v${version.version})` : ''}
+                <Title order={5} lh={1.5} lineClamp={1} title={`ZeroBox v${version.version}`}>
+                  ZeroBox {/\d/.test(version.version) ? `(v${version.version})` : ''}
                 </Title>
 
                 <UpdateSection needCheckUpdate={version.needCheckUpdate} />
@@ -71,7 +67,7 @@ function RouteComponent() {
               <Flex gap="sm">
                 <Anchor
                   size="sm"
-                  href="https://chatboxai.app/privacy"
+                  href="https://github.com/tkxs/USA0Box"
                   target="_blank"
                   underline="hover"
                   c="chatbox-tertiary"
@@ -80,7 +76,7 @@ function RouteComponent() {
                 </Anchor>
                 <Anchor
                   size="sm"
-                  href="https://chatboxai.app/terms"
+                  href="https://github.com/tkxs/USA0Box/blob/main/LICENSE"
                   target="_blank"
                   underline="hover"
                   c="chatbox-tertiary"
@@ -117,7 +113,7 @@ function RouteComponent() {
             <ListItem
               icon={<IconHome className="w-full h-full" />}
               title={t('Official Site')}
-              link={buildChatboxUrl(`/redirect_app/homepage/${language}`)}
+              link="https://github.com/tkxs/USA0Box"
             />
             <ListItem
               icon={<IconClipboard className="w-full h-full" />}
@@ -127,23 +123,23 @@ function RouteComponent() {
             <ListItem
               icon={<IconPencil className="w-full h-full" />}
               title={t('Feedback')}
-              link={buildChatboxUrl(`/redirect_app/feedback/${language}`)}
+              link="https://github.com/tkxs/USA0Box/issues"
             />
             <ListItem
               icon={<IconFileText className="w-full h-full" />}
               title={t('Changelog')}
-              link={`https://chatboxai.app/${language.split('-')[0] || 'en'}/help-center/changelog`}
+              link="https://github.com/tkxs/USA0Box/releases"
             />
             <ListItem
               icon={<IconMail className="w-full h-full" />}
               title={t('E-mail')}
-              link={`mailto:hi@chatboxai.com`}
-              value="hi@chatboxai.com"
+              link="https://github.com/tkxs/USA0Box/issues"
+              value="GitHub Issues"
             />
             <ListItem
               icon={<IconMessage2 className="w-full h-full" />}
               title={t('FAQs')}
-              link={`https://chatboxai.app/${language.split('-')[0] || 'en'}/help-center/chatbox-ai-service-faqs`}
+              link="https://github.com/tkxs/USA0Box/issues"
             />
           </List>
         </Stack>
@@ -204,7 +200,6 @@ function DesktopUpdateSection() {
   const status = useUpdateStore((s) => s.status)
   const progress = useUpdateStore((s) => s.progress)
   const updateVersion = useUpdateStore((s) => s.version)
-  const error = useUpdateStore((s) => s.error)
 
   const handleCheck = async () => {
     useUpdateStore.setState({ status: 'checking', error: null })
@@ -281,7 +276,7 @@ function DesktopUpdateSection() {
           <Anchor
             size="xs"
             c="chatbox-tertiary"
-            onClick={() => platform.openLink(buildChatboxUrl('/redirect_app/homepage/'))}
+            onClick={() => platform.openLink('https://github.com/tkxs/USA0Box/releases/latest')}
           >
             {t('Download from official site')}
           </Anchor>

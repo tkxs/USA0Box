@@ -16,9 +16,9 @@ import {
   Title,
   UnstyledButton,
 } from '@mantine/core'
-import WindowControls from '@/components/layout/WindowControls'
 import type { Language } from '@shared/types'
 import {
+  IconArrowUp,
   IconBug,
   IconCheck,
   IconChevronRight,
@@ -27,7 +27,6 @@ import {
   IconMenu2,
   IconPlayerSkipForward,
   IconPlayerStopFilled,
-  IconArrowUp,
   IconRefresh,
   IconUserCheck,
 } from '@tabler/icons-react'
@@ -38,6 +37,7 @@ import Divider from '@/components/common/Divider'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import Disclaimer from '@/components/Disclaimer'
 import ProviderImageIcon from '@/components/icons/ProviderImageIcon'
+import WindowControls from '@/components/layout/WindowControls'
 import useNeedRoomForWinControls from '@/hooks/useNeedRoomForWinControls'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import { languageNameMap, languages } from '@/i18n/locales'
@@ -396,7 +396,7 @@ function GuidePage() {
                   <UnstyledButton className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-[var(--chatbox-background-tertiary)] transition-colors">
                     <ProviderImageIcon provider="chatbox-ai" size={18} />
                     <Text size="sm" className="text-[var(--chatbox-tint-secondary)]">
-                      Chatbox Guide
+                      ZeroBox Guide
                     </Text>
                     <ScalableIcon
                       icon={IconChevronRight}
@@ -410,7 +410,7 @@ function GuidePage() {
                     leftSection={<ProviderImageIcon provider="chatbox-ai" size={16} />}
                     rightSection={<ScalableIcon icon={IconCheck} size={14} className="text-chatbox-tint-brand" />}
                   >
-                    Chatbox Guide
+                    ZeroBox Guide
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>

@@ -261,7 +261,7 @@ const KnowledgeBasePage: React.FC = () => {
   function formatParserType(parserType?: DocumentParserType): string {
     switch (parserType) {
       case 'chatbox-ai':
-        return 'Chatbox AI'
+        return 'ZeroBox AI'
       case 'mineru':
         return 'MinerU'
       case 'local':
@@ -606,8 +606,8 @@ const KnowledgeBasePage: React.FC = () => {
                             {t('Models')}:
                           </Text>
                           <ModelPill
-                            modelValue={'Chatbox AI'}
-                            formatModelName={() => 'Chatbox AI'}
+                            modelValue={'ZeroBox AI'}
+                            formatModelName={() => 'ZeroBox AI'}
                             isProviderAvailable={() => canUseChatboxAIProvider}
                             type="embedding"
                             t={t}

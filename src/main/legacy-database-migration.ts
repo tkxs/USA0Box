@@ -3,6 +3,11 @@ import path from 'node:path'
 import { app } from 'electron'
 import log from 'electron-log/main'
 
+// Keep using the existing profile directory after the visible product rename.
+// This must run before any other main-process module reads app.getPath('userData').
+app.setPath('userData', path.join(app.getPath('appData'), 'Sub0Box'))
+app.setName('ZeroBox')
+
 const sqliteSidecarSuffixes = ['', '-wal', '-shm', '-journal'] as const
 
 type MigrationFileStatus = 'pending' | 'missing-source' | 'skipped-target-exists' | 'copying' | 'copied' | 'failed'

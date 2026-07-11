@@ -146,7 +146,7 @@ export function QuickCreateApiKey({ onCreated }: QuickCreateApiKeyProps) {
           <Stack gap="md">
             <TextInput
               label="API Key 名称"
-              placeholder="例如：Chatbox"
+              placeholder="例如：ZeroBox"
               value={name}
               onChange={(event) => setName(event.currentTarget.value)}
               disabled={submitting}

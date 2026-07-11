@@ -65,7 +65,7 @@ export default function UpdateAnnouncementModal({ latestVersion, needCheckUpdate
             : '立即更新'
 
   return (
-    <Modal opened={opened} onClose={dismiss} title={`发现新版本 Sub0Box ${version}`} centered size="lg">
+    <Modal opened={opened} onClose={dismiss} title={`发现新版本 ZeroBox ${version}`} centered size="lg">
       <Stack gap="md">
         <ScrollArea.Autosize mah="50vh" type="auto">
           {loadingNotes ? (

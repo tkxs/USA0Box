@@ -14,7 +14,7 @@ const ALL_PARSER_OPTIONS: {
 }[] = [
   { value: 'none', label: 'Text Only', mobileWebOnly: true }, // Basic text file support only (mobile/web only)
   { value: 'local', label: 'Local', desktopOnly: true }, // Only available on desktop
-  { value: 'chatbox-ai', label: 'Chatbox AI' },
+  { value: 'chatbox-ai', label: 'ZeroBox AI' },
   { value: 'mineru', label: 'MinerU', desktopOnly: true }, // Only available on desktop (requires IPC)
 ]
 

@@ -52,7 +52,7 @@ export const LicenseKeyView = forwardRef<HTMLDivElement, LicenseKeyViewProps>(({
       <Flex gap="xs" align="center" justify="space-between">
         <Flex gap="xs" align="center">
           <Title order={3} c="chatbox-secondary">
-            Chatbox AI
+            ZeroBox AI
           </Title>
           <Button
             variant="transparent"

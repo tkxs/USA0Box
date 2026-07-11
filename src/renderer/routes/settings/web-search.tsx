@@ -4,13 +4,13 @@ import { createFileRoute } from '@tanstack/react-router'
 import { ofetch } from 'ofetch'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { trackJkClickEvent } from '@/analytics/jk'
+import { JK_EVENTS, JK_PAGE_NAMES } from '@/analytics/jk-events'
 import { AdaptiveSelect } from '@/components/AdaptiveSelect'
 import { PROVIDERS_WITH_PARSE_LINK } from '@/packages/web-search'
 import { BochaSearch } from '@/packages/web-search/bocha'
 import { QUERIT_SEARCH_URL } from '@/packages/web-search/querit'
 import platform from '@/platform'
-import { trackJkClickEvent } from '@/analytics/jk'
-import { JK_EVENTS, JK_PAGE_NAMES } from '@/analytics/jk-events'
 import { useSettingsStore } from '@/stores/settingsStore'
 
 export const Route = createFileRoute('/settings/web-search')({
@@ -100,7 +100,7 @@ export function RouteComponent() {
       <AdaptiveSelect
         comboboxProps={{ withinPortal: true, withArrow: true }}
         data={[
-          { value: 'build-in', label: 'Chatbox AI' },
+          { value: 'build-in', label: 'ZeroBox AI' },
           { value: 'bing', label: 'Bing Search (Free)' },
           { value: 'tavily', label: 'Tavily' },
           { value: 'bocha', label: 'BoCha' },

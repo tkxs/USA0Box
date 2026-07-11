@@ -28,12 +28,12 @@ import useVersion from './hooks/useVersion'
 import { navigateToSettings } from './modals/Settings'
 import { trackingEvent } from './packages/event'
 import platform from './platform'
-import { featureFlags } from './utils/feature-flags'
 import icon from './static/icon.png'
 import { settingsStore, useLanguage } from './stores/settingsStore'
 import { taskSessionStore } from './stores/taskSessionStore'
 import { useUIStore } from './stores/uiStore'
 import { installUpdate, useUpdateStore } from './stores/updateStore'
+import { featureFlags } from './utils/feature-flags'
 import { CHATBOX_BUILD_PLATFORM, CHATBOX_BUILD_TARGET } from './variables'
 
 export default function Sidebar() {
@@ -162,7 +162,7 @@ export default function Sidebar() {
             <Flex align="center" gap="sm" onClick={() => navigate({ to: '/about' })} style={{ cursor: 'pointer' }}>
               <Image src={icon} w={20} h={20} />
               <Text span c="chatbox-secondary" size="xl" lh={1.2} fw="700">
-                Chatbox
+                ZeroBox
               </Text>
               {/\d/.test(versionHook.version) && (
                 <Text span c="chatbox-tertiary" size="sm">

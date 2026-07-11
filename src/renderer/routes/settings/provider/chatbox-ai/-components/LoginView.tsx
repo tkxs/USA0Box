@@ -33,7 +33,7 @@ export const LoginView = forwardRef<HTMLDivElement, LoginViewProps>(
           <UnstyledButton onClick={onSwitchToLicenseKey}>
             <Flex gap="xxs" align="center">
               <Text size="sm" c="chatbox-tertiary">
-                使用 Chatbox 许可证密钥
+                使用 ZeroBox 许可证密钥
               </Text>
               <ScalableIcon icon={IconArrowRight} size={16} className="text-chatbox-tint-brand" />
             </Flex>

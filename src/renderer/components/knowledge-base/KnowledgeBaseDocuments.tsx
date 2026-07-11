@@ -938,7 +938,7 @@ const KnowledgeBaseDocuments: React.FC<KnowledgeBaseDocumentsProps> = ({ knowled
                                     {doc.parser_type && (
                                       <Pill size="xs" c="dimmed">
                                         {doc.parser_type === 'chatbox-ai'
-                                          ? 'Chatbox AI'
+                                          ? 'ZeroBox AI'
                                           : doc.parser_type === 'mineru'
                                             ? 'MinerU'
                                             : 'Local'}

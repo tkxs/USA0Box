@@ -39,7 +39,7 @@ export function getOCRModel(
   const modelSettings = getModelSettings(globalSettings, ModelProviderEnum.ChatboxAI, 'chatbox-ocr-1')
   return {
     model: getModel(modelSettings, globalSettings, configs, dependencies),
-    providerName: 'Chatbox AI',
+    providerName: 'ZeroBox AI',
   }
 }
 

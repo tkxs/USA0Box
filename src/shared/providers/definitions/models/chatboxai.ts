@@ -4,13 +4,11 @@ import {
   type GoogleGenerativeAIProvider,
   type GoogleGenerativeAIProviderOptions,
 } from '@ai-sdk/google'
-import { buildGeminiImageConfig } from '../gemini-types'
 import { createOpenAI, type OpenAIProvider } from '@ai-sdk/openai'
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible'
 import { type ModelMessage, streamText, type ToolSet } from 'ai'
 import AbstractAISDKModel, { type CallSettings } from '../../../models/abstract-ai-sdk'
 import { addAnthropicCacheControl } from '../../../models/anthropic-cache'
-import type { StreamTextResult } from '../../../types'
 import type {
   CallChatCompletionOptions,
   ChatStreamOptions,
@@ -18,8 +16,9 @@ import type {
   ModelStreamPart,
 } from '../../../models/types'
 import { getChatboxAPIOrigin } from '../../../request/chatboxai_pool'
-import type { ChatboxAILicenseDetail, ProviderModelInfo } from '../../../types'
+import type { ChatboxAILicenseDetail, ProviderModelInfo, StreamTextResult } from '../../../types'
 import type { ModelDependencies } from '../../../types/adapters'
+import { buildGeminiImageConfig } from '../gemini-types'
 
 interface Options {
   licenseKey?: string
@@ -101,7 +100,7 @@ export default class ChatboxAI extends AbstractAISDKModel implements ModelInterf
       return provider
     } else {
       const provider = createOpenAICompatible({
-        name: 'ChatboxAI',
+        name: 'ZeroBoxAI',
         apiKey: this.options.licenseKey || '',
         baseURL: `${getChatboxAPIOrigin()}/gateway/openai/v1`,
         headers: {

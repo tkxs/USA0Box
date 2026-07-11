@@ -213,7 +213,7 @@ export const LoggedInView = forwardRef<HTMLDivElement, LoggedInViewProps>(({ onL
       </Paper>
 
       <Button variant="subtle" size="xs" onClick={onSwitchToLicenseKey}>
-        改用 Chatbox 许可证密钥
+        改用 ZeroBox 许可证密钥
       </Button>
     </Stack>
   )

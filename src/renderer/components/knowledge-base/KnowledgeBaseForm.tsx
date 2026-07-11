@@ -93,7 +93,7 @@ export const KnowledgeBaseChatboxAIInfo: React.FC<KnowledgeBaseChatboxAIInfoProp
     <Stack gap="sm">
       {showModelsLabel && (
         <Group>
-          {t('Models')}: <Pill>Chatbox AI</Pill>
+          {t('Models')}: <Pill>ZeroBox AI</Pill>
         </Group>
       )}
       <Text size="sm" c="dimmed">
@@ -224,7 +224,7 @@ const PARSER_OPTIONS: { value: DocumentParserType; label: string; description: s
   },
   {
     value: 'chatbox-ai',
-    label: 'Chatbox AI',
+    label: 'ZeroBox AI',
     description:
       'Cloud-based document parsing service, supports PDF, Office files, EPUB and many other file types. Consumes compute points.',
   },
