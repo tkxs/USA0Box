@@ -104,6 +104,9 @@ jobs:
       - name: Build and sync Android
         run: pnpm run mobile:sync:android
 
+      - name: Make Gradle wrapper executable
+        run: chmod +x android/gradlew
+
       - name: Build test APK
         working-directory: android
         run: ./gradlew assembleDebug
