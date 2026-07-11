@@ -324,24 +324,6 @@ export function invalidateSessionRagConfigCache(licenseKey?: string) {
   sessionRagConfigCache.delete(licenseKey)
 }
 
-export interface DialogConfig {
-  markdown: string
-  buttons: { label: string; url: string }[]
-}
-
-export async function getDialogConfig(params: { uuid: string; language: string; version: string }) {
-  type Response = {
-    data: null | DialogConfig
-  }
-  const res = await ofetch<Response>(`${getAPIOrigin()}/api/dialog_config`, {
-    method: 'POST',
-    retry: 3,
-    body: params,
-    headers: await getChatboxHeaders(),
-  })
-  return res['data'] || null
-}
-
 export async function getLicenseDetail(params: { licenseKey: string }) {
   type Response = {
     data: ChatboxAILicenseDetail | null
