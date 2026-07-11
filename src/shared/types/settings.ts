@@ -407,7 +407,7 @@ export const SettingsSchema = GlobalSessionSettingsSchema.extend({
 
   autoLaunch: z.boolean().default(false),
   autoUpdate: z.boolean().default(true), // 是否自动检查更新
-  betaUpdate: z.boolean().default(false), // 是否自动检查 beta 更新
+  betaUpdate: z.boolean().default(false), // Legacy field retained for stored-settings compatibility.
 
   shortcuts: ShortcutSettingSchema,
 

@@ -155,7 +155,7 @@ function RouteComponent() {
 /**
  * Update section in the About page hero.
  * Desktop: check button, progress bar, error/retry, restart & install.
- * Mobile: "New version available" hint linking to app store.
+ * Mobile: "New version available" hint linking to GitHub Releases.
  */
 function UpdateSection({ needCheckUpdate }: { needCheckUpdate: boolean }) {
   const isDesktop = platform.type === 'desktop'

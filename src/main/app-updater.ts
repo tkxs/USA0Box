@@ -95,10 +95,6 @@ export class AppUpdater {
 
     this.isChecking = true
     try {
-      const settings = getSettings()
-      if (settings.betaUpdate) {
-        log.info('Beta update channel is not configured; using the latest stable release')
-      }
       autoUpdater.channel = 'latest'
       autoUpdater.allowDowngrade = false
       autoUpdater.setFeedURL({

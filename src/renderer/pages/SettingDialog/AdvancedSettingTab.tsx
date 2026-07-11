@@ -122,19 +122,6 @@ export default function AdvancedSettingTab(props: Props) {
                 })
               }
             />
-            {settingsEdit.autoUpdate && (
-              <FormControlLabel
-                control={<Switch />}
-                label={t('Beta updates')}
-                checked={settingsEdit.betaUpdate}
-                onChange={(e, checked) =>
-                  setSettingsEdit({
-                    ...settingsEdit,
-                    betaUpdate: checked,
-                  })
-                }
-              />
-            )}
           </FormGroup>
         </Box>
       )}

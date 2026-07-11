@@ -413,7 +413,7 @@ function SidebarUpdateBannerInner() {
 /**
  * About NavLink with update dot indicator.
  * Desktop: shows dot when electron-updater detects update (downloaded/available).
- * Mobile: shows dot when remote API says needCheckUpdate.
+ * Mobile: shows dot when GitHub Latest Release is newer.
  */
 function useShowUpdateDot(versionHook: ReturnType<typeof useVersion>) {
   const updateStatus = useUpdateStore((s) => s.status)

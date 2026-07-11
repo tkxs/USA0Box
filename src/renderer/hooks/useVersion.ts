@@ -47,19 +47,11 @@ export default function useVersion() {
   const updateCheckTimer = useRef<NodeJS.Timeout>()
   useEffect(() => {
     const handler = async () => {
-      const config = await platform.getConfig()
-      const settings = await platform.getSettings()
       const version = await platform.getVersion()
       _setVersion(version)
       try {
-        let needUpdate: boolean
-        if (platform.type === 'mobile') {
-          const latestVersion = await remote.getLatestSub0BoxVersion()
-          needUpdate = !!latestVersion && compareVersions(version, latestVersion) === -1
-        } else {
-          const os = await platform.getPlatform()
-          needUpdate = await remote.checkNeedUpdate(version, os, config, settings)
-        }
+        const latestVersion = await remote.getLatestSub0BoxVersion()
+        const needUpdate = !!latestVersion && compareVersions(version, latestVersion) === -1
         setNeedCheckUpdate(needUpdate)
       } catch (e) {
         console.error('Failed to check for updates:', e)
