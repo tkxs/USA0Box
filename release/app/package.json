@@ -1,10 +1,11 @@
 {
   "name": "zerobox",
   "productName": "ZeroBox",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "A desktop client for multiple cutting-edge AI models",
   "author": {
     "name": "ZeroBox",
+    "email": "tohuangbin@gmail.com",
     "url": "https://github.com/tkxs/USA0Box"
   },
   "main": "./dist/main/main.js",

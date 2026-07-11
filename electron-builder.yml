@@ -58,6 +58,7 @@ nsis:
   include: assets/installer.nsh
 
 linux:
+  maintainer: ZeroBox <tohuangbin@gmail.com>
   target:
     - target: AppImage
       arch:
