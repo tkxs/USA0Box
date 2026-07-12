@@ -2,6 +2,19 @@ import { CapacitorHttp } from '@capacitor/core'
 import { createNativeReadableStream } from '@/native/stream-http'
 import { ApiError } from '../../shared/models/errors'
 
+function isStreamingRequest(headers: Headers, body?: RequestInit['body']): body is string {
+  if (typeof body !== 'string' || !headers.get('content-type')?.toLowerCase().includes('application/json')) {
+    return false
+  }
+
+  try {
+    const payload = JSON.parse(body) as { stream?: unknown } | null
+    return payload?.stream === true
+  } catch {
+    return false
+  }
+}
+
 export async function handleMobileRequest(
   url: string,
   method: string,
@@ -15,7 +28,7 @@ export async function handleMobileRequest(
   headers.forEach((value, key) => {
     headerObj[key] = value
   })
-  const isStreaming = body && typeof body === 'string' && JSON.parse(body).stream === true
+  const isStreaming = isStreamingRequest(headers, body)
 
   if (isStreaming) {
     try {

@@ -1,36 +1,20 @@
-# ZeroBox 0.1.2
+# ZeroBox 0.1.3
 
-本次更新完成 ZeroBox 与新版 SUB2API 的安全登录对接，并修复手机端图标显示问题。
+本次更新修复手机端网站授权与更新检查体验，并统一“关于”页面的官网入口。
 
-## SUB2API 安全登录
+## 手机端登录
 
-- Android 与 iOS 使用各自注册的 OAuth Public Client，通过 `zerobox://oauth/callback` 在授权完成后直接返回 ZeroBox。
-- 登录继续使用 OAuth 2.1 Authorization Code + S256 PKCE、随机 `state` 和一次性授权码。
-- 已适配 SUB2API 新的标准 OAuth Token 响应和 App 专用访问令牌。
-- 兼容 SUB2API 当前 `{ code, message, data }` 与 App API `{ success, data }` 两种响应格式。
-- 移除线上尚未部署、会返回 404 的“设备验证码登录”入口，统一使用网站安全授权。
-- 密码、Turnstile 和身份验证码始终只提交到 SUB2API 网站，ZeroBox 不接触用户密码。
+- 修复 OAuth 授权码兑换时，表单请求体被移动端请求层误当作 JSON 解析的问题。
+- 网站授权完成后可正常兑换访问令牌，不再出现 `Unexpected token 'g'` 错误。
 
-## 模型分组与密钥
+## 手机端更新
 
-- 模型分组优先显示 SUB2API 返回的实际生效倍率 `effective_rate_multiplier`。
-- 未返回实际倍率时，自动兼容用户倍率和基础倍率。
-- 快速创建 API Key 页面同步显示实际生效倍率。
-- 模型同步继续使用用户为对应分组选择的真实 API Key 请求上游模型列表。
+- 点击“检查更新”后显示加载状态并实际重新获取最新版本。
+- 检查完成后明确反馈“有新版本”“已是最新”或“更新失败”。
+- Android 检测到新版本后继续支持应用内下载并安装更新包。
 
-## 手机端图标
+## 关于页面
 
-- 修复 Android 桌面图标出现黑色背景的问题。
-- Android 传统图标使用透明画布，自适应图标使用透明前景和标准背景。
-- iOS 图标使用符合 App Store 要求的不透明背景，避免 Alpha 通道导致构建或审核问题。
-- 新增统一的手机图标生成脚本，Android 与 iOS 资源可以稳定重复生成。
-
-## 后端契约
-
-- 新增 SUB2API 后端对接实施文档，记录客户端注册、回调校验、Token、刷新、撤销、scope 和 App API 契约。
-- ZeroBox 当前使用 `zerobox-desktop`、`zerobox-android` 和 `zerobox-ios` 三个 Public Client，不使用 `client_secret`。
-
-## 更新说明
-
-- Android 用户可通过 ZeroBox 应用内更新下载并安装 `ZeroBox-android-update.apk`。
-- iOS 更新仍需通过 App Store、TestFlight 或合规企业分发渠道完成。
+- 官网地址调整为 `https://usa0.top`。
+- 隐藏 GitHub、小红书和微信板块。
+- 调查问卷、建议反馈、更新日志、电子邮件和常见疑问统一跳转官网。

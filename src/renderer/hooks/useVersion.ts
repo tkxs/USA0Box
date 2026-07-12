@@ -1,7 +1,7 @@
 import { compareVersions } from 'compare-versions'
 import dayjs from 'dayjs'
 import { useAtomValue } from 'jotai'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { remoteConfigAtom } from '@/stores/atoms'
 import { CHATBOX_BUILD_CHANNEL, CHATBOX_BUILD_PLATFORM } from '@/variables'
 import * as remote from '../packages/remote'
@@ -33,6 +33,7 @@ export default function useVersion() {
   const [version, _setVersion] = useState('')
   const [latestVersion, setLatestVersion] = useState('')
   const [needCheckUpdate, setNeedCheckUpdate] = useState(false)
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
   const isStoreReviewPlatform =
     CHATBOX_BUILD_PLATFORM === 'ios' ||
     (CHATBOX_BUILD_PLATFORM === 'android' && CHATBOX_BUILD_CHANNEL === 'google_play')
@@ -46,15 +47,25 @@ export default function useVersion() {
     [version, remoteConfig, isStoreReviewPlatform]
   )
   const updateCheckTimer = useRef<NodeJS.Timeout>()
+  const checkForUpdate = useCallback(async () => {
+    setIsCheckingUpdate(true)
+    try {
+      const currentVersion = await platform.getVersion()
+      _setVersion(currentVersion)
+      const nextLatestVersion = await remote.getLatestSub0BoxVersion()
+      setLatestVersion(nextLatestVersion)
+      const needUpdate = !!nextLatestVersion && compareVersions(currentVersion, nextLatestVersion) === -1
+      setNeedCheckUpdate(needUpdate)
+      return { needUpdate, latestVersion: nextLatestVersion }
+    } finally {
+      setIsCheckingUpdate(false)
+    }
+  }, [])
+
   useEffect(() => {
     const handler = async () => {
-      const version = await platform.getVersion()
-      _setVersion(version)
       try {
-        const latestVersion = await remote.getLatestSub0BoxVersion()
-        setLatestVersion(latestVersion)
-        const needUpdate = !!latestVersion && compareVersions(version, latestVersion) === -1
-        setNeedCheckUpdate(needUpdate)
+        await checkForUpdate()
       } catch (e) {
         console.error('Failed to check for updates:', e)
       }
@@ -67,7 +78,7 @@ export default function useVersion() {
         updateCheckTimer.current = undefined
       }
     }
-  }, [])
+  }, [checkForUpdate])
 
   // True when all async data needed to evaluate isExceeded has loaded.
   // On non-store platforms this is always true (no defense to evaluate).
@@ -82,5 +93,7 @@ export default function useVersion() {
     isExceeded,
     isExceededResolved,
     needCheckUpdate,
+    isCheckingUpdate,
+    checkForUpdate,
   }
 }

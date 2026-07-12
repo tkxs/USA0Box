@@ -1,18 +1,4 @@
-import {
-  Anchor,
-  Box,
-  Button,
-  Container,
-  Divider,
-  Flex,
-  Image,
-  Popover,
-  Progress,
-  Stack,
-  Text,
-  Title,
-} from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
+import { Anchor, Box, Button, Container, Divider, Flex, Image, Progress, Stack, Text, Title } from '@mantine/core'
 import {
   IconChevronRight,
   IconClipboard,
@@ -27,24 +13,22 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Fragment, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
-import BrandGithub from '@/components/icons/BrandGithub'
-import BrandRedNote from '@/components/icons/BrandRedNote'
-import BrandWechat from '@/components/icons/BrandWechat'
 import Page from '@/components/layout/Page'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
 import useVersion from '@/hooks/useVersion'
 import platform from '@/platform'
 import iconPNG from '@/static/icon.png'
-import IMG_WECHAT_QRCODE from '@/static/wechat_qrcode.png'
 import { installUpdate, requestMobileUpdateInstall, useUpdateStore } from '@/stores/updateStore'
 import { CHATBOX_BUILD_PLATFORM } from '@/variables'
+
+const OFFICIAL_SITE_URL = 'https://usa0.top'
 
 export const Route = createFileRoute('/about')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
-  const { t, i18n: _i18n } = useTranslation()
+  const { t } = useTranslation()
   const version = useVersion()
   const isSmallScreen = useIsSmallScreen()
 
@@ -60,7 +44,7 @@ function RouteComponent() {
                   ZeroBox {/\d/.test(version.version) ? `(v${version.version})` : ''}
                 </Title>
 
-                <UpdateSection needCheckUpdate={version.needCheckUpdate} latestVersion={version.latestVersion} />
+                <UpdateSection versionState={version} />
               </Flex>
               <Text>{t('about-slogan')}</Text>
               <Text c="chatbox-tertiary">{t('about-introduction')}</Text>
@@ -90,58 +74,19 @@ function RouteComponent() {
 
           <List>
             <ListItem
-              icon={<BrandGithub className="w-full h-full" />}
-              title={t('Github')}
-              link="https://github.com/tkxs/USA0Box"
-              value="USA0Box"
-            />
-            {/* <ListItem
-              icon={<BrandX className="w-full h-full" />}
-              title={t('X(Twitter)')}
-              link="https://x.com/ChatboxAI_HQ"
-              value="@ChatboxAI_HQ"
-            /> */}
-            <ListItem
-              icon={<BrandRedNote className="w-full h-full" />}
-              title={t('RedNote')}
-              link="https://www.xiaohongshu.com/user/profile/67b581b6000000000e01d11f"
-              value="@63844903136"
-            />
-            <ListItem icon={<BrandWechat className="w-full h-full" />} title={t('WeChat')} right={<WechatQRCode />} />
-          </List>
-
-          <List>
-            <ListItem
               icon={<IconHome className="w-full h-full" />}
               title={t('Official Site')}
-              link="https://github.com/tkxs/USA0Box"
+              link={OFFICIAL_SITE_URL}
             />
-            <ListItem
-              icon={<IconClipboard className="w-full h-full" />}
-              title={t('Survey')}
-              link={_i18n.language === 'zh-Hans' ? 'https://jsj.top/f/fcMYEa' : 'https://jsj.top/f/RUMbvY'}
-            />
-            <ListItem
-              icon={<IconPencil className="w-full h-full" />}
-              title={t('Feedback')}
-              link="https://github.com/tkxs/USA0Box/issues"
-            />
+            <ListItem icon={<IconClipboard className="w-full h-full" />} title={t('Survey')} link={OFFICIAL_SITE_URL} />
+            <ListItem icon={<IconPencil className="w-full h-full" />} title={t('Feedback')} link={OFFICIAL_SITE_URL} />
             <ListItem
               icon={<IconFileText className="w-full h-full" />}
               title={t('Changelog')}
-              link="https://github.com/tkxs/USA0Box/releases"
+              link={OFFICIAL_SITE_URL}
             />
-            <ListItem
-              icon={<IconMail className="w-full h-full" />}
-              title={t('E-mail')}
-              link="https://github.com/tkxs/USA0Box/issues"
-              value="GitHub Issues"
-            />
-            <ListItem
-              icon={<IconMessage2 className="w-full h-full" />}
-              title={t('FAQs')}
-              link="https://github.com/tkxs/USA0Box/issues"
-            />
+            <ListItem icon={<IconMail className="w-full h-full" />} title={t('E-mail')} link={OFFICIAL_SITE_URL} />
+            <ListItem icon={<IconMessage2 className="w-full h-full" />} title={t('FAQs')} link={OFFICIAL_SITE_URL} />
           </List>
         </Stack>
       </Container>
@@ -152,9 +97,9 @@ function RouteComponent() {
 /**
  * Update section in the About page hero.
  * Desktop: check button, progress bar, error/retry, restart & install.
- * Mobile: "New version available" hint linking to GitHub Releases.
+ * Mobile: check status feedback and in-app Android update installation.
  */
-function UpdateSection({ needCheckUpdate, latestVersion }: { needCheckUpdate: boolean; latestVersion: string }) {
+function UpdateSection({ versionState }: { versionState: ReturnType<typeof useVersion> }) {
   const isDesktop = platform.type === 'desktop'
 
   if (isDesktop) {
@@ -162,28 +107,69 @@ function UpdateSection({ needCheckUpdate, latestVersion }: { needCheckUpdate: bo
   }
 
   // Mobile and Web both use external link
-  return <MobileUpdateHint needCheckUpdate={needCheckUpdate} latestVersion={latestVersion} />
+  return <MobileUpdateHint versionState={versionState} />
 }
 
-function MobileUpdateHint({ needCheckUpdate, latestVersion }: { needCheckUpdate: boolean; latestVersion: string }) {
+function MobileUpdateHint({ versionState }: { versionState: ReturnType<typeof useVersion> }) {
   const { t } = useTranslation()
   const status = useUpdateStore((state) => state.status)
   const progress = useUpdateStore((state) => state.progress)
+  const storedUpdateVersion = useUpdateStore((state) => state.version)
   const isAndroid = platform.type === 'mobile' && CHATBOX_BUILD_PLATFORM === 'android'
+  const updateAvailable = versionState.needCheckUpdate || status === 'available'
+  const updateVersion = versionState.latestVersion || storedUpdateVersion || ''
 
-  const handleClick = () => {
-    if (isAndroid && needCheckUpdate && latestVersion) {
-      void requestMobileUpdateInstall(latestVersion)
+  const handleClick = async () => {
+    if (isAndroid && updateAvailable && updateVersion) {
+      void requestMobileUpdateInstall(updateVersion)
       return
     }
-    if (isAndroid) {
-      useUpdateStore.setState({ status: 'up-to-date', error: null })
+    if (updateAvailable) {
+      void platform.openLink(OFFICIAL_SITE_URL)
       return
     }
-    void platform.openLink('https://github.com/tkxs/USA0Box/releases/latest')
+
+    useUpdateStore.setState({ status: 'checking', error: null })
+    try {
+      const result = await versionState.checkForUpdate()
+      useUpdateStore.setState({
+        status: result.needUpdate ? 'available' : 'up-to-date',
+        version: result.latestVersion || null,
+        error: null,
+      })
+    } catch (error) {
+      useUpdateStore.setState({
+        status: 'error',
+        error: error instanceof Error ? error.message : t('Failed to check for updates'),
+      })
+    }
   }
 
-  if (needCheckUpdate) {
+  if (status === 'checking' || versionState.isCheckingUpdate) {
+    return (
+      <Button size="xs" variant="default" radius="xl" className="flex-shrink-0" loading>
+        {t('Checking...')}
+      </Button>
+    )
+  }
+
+  if (status === 'error') {
+    return (
+      <Button size="xs" variant="default" radius="xl" className="flex-shrink-0" onClick={handleClick}>
+        {t('Update failed')}
+      </Button>
+    )
+  }
+
+  if (status === 'up-to-date') {
+    return (
+      <Text size="xs" c="chatbox-tertiary" className="flex-shrink-0">
+        {t('Already up to date')}
+      </Text>
+    )
+  }
+
+  if (updateAvailable) {
     return (
       <Button
         size="xs"
@@ -200,7 +186,7 @@ function MobileUpdateHint({ needCheckUpdate, latestVersion }: { needCheckUpdate:
   }
 
   return (
-    <Button size="xs" variant="default" radius="xl" className="flex-shrink-0" onClick={handleClick}>
+    <Button size="xs" variant="default" radius="xl" className="flex-shrink-0" onClick={() => void handleClick()}>
       {t('Check Update')}
     </Button>
   )
@@ -308,23 +294,6 @@ function DesktopUpdateSection() {
         </Button>
       )
   }
-}
-
-function WechatQRCode() {
-  const { t } = useTranslation()
-  const [opened, { close, open }] = useDisclosure(false)
-  return (
-    <Popover position="top" withArrow shadow="md" opened={opened}>
-      <Popover.Target>
-        <Text onMouseEnter={open} onMouseLeave={close} c="chatbox-brand" className="cursor-pointer">
-          {t('QR Code')}
-        </Text>
-      </Popover.Target>
-      <Popover.Dropdown style={{ pointerEvents: 'none' }}>
-        <Image src={IMG_WECHAT_QRCODE} alt="wechat qrcode" w={160} h={160} />
-      </Popover.Dropdown>
-    </Popover>
-  )
 }
 
 function List(props: { children: ReactElement[] }) {
