@@ -12,8 +12,9 @@ const appPackageJson = require('../../release/app/package.json')
 const dependencies = appPackageJson.dependencies || {}
 
 if (Object.keys(dependencies).length > 0 && fs.existsSync(appNodeModulesPath)) {
+    const electronVersion = require(path.join(rootPath, 'node_modules/electron/package.json')).version
     const electronRebuildCmd =
-        '../../node_modules/.bin/electron-rebuild --force --types prod,dev,optional --module-dir .'
+        `../../node_modules/.bin/electron-rebuild --version ${electronVersion} --force --types prod,dev,optional --module-dir .`
     const cmd = process.platform === 'win32' ? electronRebuildCmd.replace(/\//g, '\\') : electronRebuildCmd
     execSync(cmd, {
         cwd: appPath,
