@@ -62,11 +62,7 @@ async function doRequest(url: string, options: RequestOptions): Promise<Response
   }
 
   const makeRequest = async () => {
-    if (platform.type === 'mobile' && useProxy) {
-      return handleMobileRequest(requestUrl, method, headers, body, signal)
-    }
-
-    const res = await fetch(requestUrl, { method, headers, body, signal })
+    const res = await fetchCrossPlatform(requestUrl, { method, headers, body, signal })
     if (!res.ok) {
       const err = await res.text().catch(() => null)
       throw new ApiError(`Status Code ${res.status}`, err ?? undefined)
@@ -75,6 +71,21 @@ async function doRequest(url: string, options: RequestOptions): Promise<Response
   }
 
   return retryRequest(makeRequest, retry, requestUrl)
+}
+
+export function fetchCrossPlatform(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const url = input.toString()
+  if (platform.type === 'mobile') {
+    return handleMobileRequest(
+      url,
+      init?.method || 'GET',
+      new Headers(init?.headers),
+      init?.body,
+      init?.signal || undefined,
+      false
+    )
+  }
+  return fetch(input, init)
 }
 
 export const apiRequest = {

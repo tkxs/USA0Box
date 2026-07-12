@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+env:
+  VITE_SUB2API_API_BASE_URL: https://usa0.top/api/v1
+  VITE_SUB2API_WEB_URL: https://usa0.top
+
 jobs:
   build:
     name: Build ${{ matrix.name }}

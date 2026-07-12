@@ -17,16 +17,16 @@ describe('SUB2API provider mapping', () => {
 
   it('maps group platforms to the matching gateway endpoint', () => {
     expect(getSub2APIProviderEndpoint(ModelProviderType.Claude, 'anthropic')).toEqual({
-      apiHost: 'http://localhost:18080/v1',
+      apiHost: 'https://usa0.top/v1',
     })
     expect(getSub2APIProviderEndpoint(ModelProviderType.Claude, 'antigravity')).toEqual({
-      apiHost: 'http://localhost:18080/antigravity/v1',
+      apiHost: 'https://usa0.top/antigravity/v1',
     })
     expect(getSub2APIProviderEndpoint(ModelProviderType.Gemini, 'gemini')).toEqual({
-      apiHost: 'http://localhost:18080',
+      apiHost: 'https://usa0.top',
     })
     expect(getSub2APIProviderEndpoint(ModelProviderType.OpenAIResponses, 'openai')).toEqual({
-      apiHost: 'http://localhost:18080',
+      apiHost: 'https://usa0.top',
       apiPath: '/responses',
     })
   })

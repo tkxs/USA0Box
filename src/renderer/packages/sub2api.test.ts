@@ -37,15 +37,22 @@ describe('SUB2API client', () => {
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(loginToSub2API('admin@example.com', 'password')).resolves.toMatchObject({
+    await expect(loginToSub2API('admin@example.com', 'password', 'turnstile-token')).resolves.toMatchObject({
       type: 'authenticated',
       accessToken: 'access-1',
       refreshToken: 'refresh-1',
       user: { email: 'admin@example.com' },
     })
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:18080/api/v1/auth/login',
-      expect.objectContaining({ method: 'POST' })
+      'https://usa0.top/api/v1/auth/login',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          email: 'admin@example.com',
+          password: 'password',
+          turnstile_token: 'turnstile-token',
+        }),
+      })
     )
   })
 
@@ -97,7 +104,7 @@ describe('SUB2API client', () => {
 
     await expect(getSub2APIAvailableGroups()).resolves.toEqual(groups)
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:18080/api/v1/groups/available',
+      'https://usa0.top/api/v1/groups/available',
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer access-1' }),
       })
@@ -121,7 +128,7 @@ describe('SUB2API client', () => {
 
     await expect(getSub2APIKeys()).resolves.toEqual(keys)
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:18080/api/v1/keys?page=1&page_size=100',
+      'https://usa0.top/api/v1/keys?page=1&page_size=100',
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer access-1' }),
       })
@@ -143,7 +150,7 @@ describe('SUB2API client', () => {
       { modelId: 'claude-sonnet-4-6', nickname: 'Claude Sonnet 4.6', type: 'chat' },
       { modelId: 'gemini-2.5-pro', nickname: 'Gemini 2.5 Pro', type: 'chat' },
     ])
-    expect(fetchMock).toHaveBeenCalledWith('http://localhost:18080/v1/models', {
+    expect(fetchMock).toHaveBeenCalledWith('https://usa0.top/v1/models', {
       method: 'GET',
       headers: { Authorization: 'Bearer sk-group-key' },
     })
@@ -168,7 +175,7 @@ describe('SUB2API client', () => {
 
     await expect(createSub2APIKey({ name: ' Chatbox ', groupId: 1 })).resolves.toEqual(createdKey)
     expect(fetchMock).toHaveBeenCalledWith(
-      'http://localhost:18080/api/v1/keys',
+      'https://usa0.top/api/v1/keys',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ Authorization: 'Bearer access-1' }),

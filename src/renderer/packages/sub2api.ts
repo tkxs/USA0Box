@@ -1,8 +1,9 @@
 import type { ProviderModelInfo } from '@shared/types'
 import { authInfoStore } from '@/stores/authInfoStore'
+import { fetchCrossPlatform } from '@/utils/request'
 
-const DEFAULT_SUB2API_API_BASE_URL = 'http://localhost:18080/api/v1'
-const DEFAULT_SUB2API_WEB_URL = 'http://localhost:3000'
+const DEFAULT_SUB2API_API_BASE_URL = 'https://usa0.top/api/v1'
+const DEFAULT_SUB2API_WEB_URL = 'https://usa0.top'
 
 export interface Sub2APIUser {
   id: number
@@ -92,8 +93,10 @@ interface PaginatedResponse<T> {
   total: number
 }
 
-interface Sub2APIPublicSettings {
+export interface Sub2APIPublicSettings {
   site_name?: string
+  turnstile_enabled?: boolean
+  turnstile_site_key?: string
 }
 
 function isTwoFactorResponse(result: TokenResponse | TwoFactorResponse): result is TwoFactorResponse {
@@ -117,7 +120,7 @@ export function getSub2APIGatewayUrl() {
 }
 
 export async function getSub2APIModels(apiKey: string): Promise<ProviderModelInfo[]> {
-  const response = await fetch(`${getSub2APIGatewayUrl()}/v1/models`, {
+  const response = await fetchCrossPlatform(`${getSub2APIGatewayUrl()}/v1/models`, {
     method: 'GET',
     headers: { Authorization: `Bearer ${apiKey}` },
   })
@@ -140,8 +143,12 @@ export async function getSub2APIModels(apiKey: string): Promise<ProviderModelInf
     .filter((model) => !!model.modelId)
 }
 
+export function getSub2APIPublicSettings(): Promise<Sub2APIPublicSettings> {
+  return publicRequest<Sub2APIPublicSettings>('/settings/public')
+}
+
 export async function getSub2APISiteName(): Promise<string> {
-  const settings = await publicRequest<Sub2APIPublicSettings>('/settings/public')
+  const settings = await getSub2APIPublicSettings()
   return settings.site_name?.trim() || ''
 }
 
@@ -161,7 +168,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 }
 
 async function publicRequest<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getSub2APIApiBaseUrl()}${path}`, {
+  const response = await fetchCrossPlatform(`${getSub2APIApiBaseUrl()}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -201,7 +208,7 @@ async function authenticatedRequest<T>(path: string, init?: RequestInit, canRetr
   const tokens = authInfoStore.getState().getTokens()
   if (!tokens) throw new Error('请先登录')
 
-  const response = await fetch(`${getSub2APIApiBaseUrl()}${path}`, {
+  const response = await fetchCrossPlatform(`${getSub2APIApiBaseUrl()}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
@@ -222,10 +229,14 @@ async function authenticatedRequest<T>(path: string, init?: RequestInit, canRetr
   return parseResponse<T>(response)
 }
 
-export async function loginToSub2API(email: string, password: string): Promise<Sub2APILoginResult> {
+export async function loginToSub2API(
+  email: string,
+  password: string,
+  turnstileToken?: string
+): Promise<Sub2APILoginResult> {
   const result = await publicRequest<TokenResponse | TwoFactorResponse>('/auth/login', {
     method: 'POST',
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, turnstile_token: turnstileToken || undefined }),
   })
 
   if (isTwoFactorResponse(result)) {

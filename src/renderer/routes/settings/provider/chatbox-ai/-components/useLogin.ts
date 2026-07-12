@@ -14,33 +14,36 @@ export function useLogin({ onLoginSuccess }: UseLoginParams) {
   const [loginState, setLoginState] = useState<'idle' | 'submitting' | 'two-factor' | 'success' | 'error'>('idle')
   const [loginError, setLoginError] = useState('')
 
-  const submit = useCallback(async () => {
-    const normalizedEmail = email.trim()
-    if (!normalizedEmail || !password) {
-      setLoginError('请输入邮箱和密码')
-      setLoginState('error')
-      return false
-    }
-
-    setLoginState('submitting')
-    setLoginError('')
-    try {
-      const result = await loginToSub2API(normalizedEmail, password)
-      if (result.type === 'two-factor') {
-        setTempToken(result.tempToken)
-        setMaskedEmail(result.userEmailMasked || '')
-        setLoginState('two-factor')
+  const submit = useCallback(
+    async (turnstileToken?: string) => {
+      const normalizedEmail = email.trim()
+      if (!normalizedEmail || !password) {
+        setLoginError('请输入邮箱和密码')
+        setLoginState('error')
         return false
       }
-      await onLoginSuccess({ accessToken: result.accessToken, refreshToken: result.refreshToken })
-      setLoginState('success')
-      return true
-    } catch (error) {
-      setLoginError(error instanceof Error ? error.message : '登录失败')
-      setLoginState('error')
-      return false
-    }
-  }, [email, onLoginSuccess, password])
+
+      setLoginState('submitting')
+      setLoginError('')
+      try {
+        const result = await loginToSub2API(normalizedEmail, password, turnstileToken)
+        if (result.type === 'two-factor') {
+          setTempToken(result.tempToken)
+          setMaskedEmail(result.userEmailMasked || '')
+          setLoginState('two-factor')
+          return false
+        }
+        await onLoginSuccess({ accessToken: result.accessToken, refreshToken: result.refreshToken })
+        setLoginState('success')
+        return true
+      } catch (error) {
+        setLoginError(error instanceof Error ? error.message : '登录失败')
+        setLoginState('error')
+        return false
+      }
+    },
+    [email, onLoginSuccess, password]
+  )
 
   const verifyTwoFactor = useCallback(async () => {
     if (!tempToken || totpCode.trim().length !== 6) return false

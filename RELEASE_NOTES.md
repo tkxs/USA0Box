@@ -1,10 +1,11 @@
-# ZeroBox 0.0.9
+# ZeroBox 0.0.10
 
-本次更新完成应用品牌升级并修复 Linux 安装包构建：
+本次更新将 ZeroBox 正式连接到线上 SUB2API 服务：
 
-- 应用名称由 Chatbox/Sub0Box 统一更名为 ZeroBox。
-- Windows、macOS、Linux、Android、iOS 和 Web 全部使用新的 ZeroBox 图标。
-- 更新安装包、窗口标题、托盘、菜单、关于页面和启动界面的品牌名称。
-- 继续沿用原有用户数据目录，已有会话、登录信息和设置不会丢失。
-- 自动更新与更新公告继续从 ZeroBox GitHub Releases 获取。
-- 修复 Linux Debian 安装包缺少维护者信息导致的构建失败。
+- SUB2API 管理后台与登录地址切换到 `https://usa0.top`。
+- 模型网关切换到 `https://usa0.top`，不再默认连接本机服务。
+- 登录页自动读取线上站点名称“USA-零”。
+- 分组、倍率、订阅和 API Key 数据均从线上账户实时获取。
+- 模型同步和聊天请求继续使用用户选择的分组 API Key。
+- Android 与 iOS 的 SUB2API 请求改用原生 HTTP，避免 WebView 跨域限制。
+- 登录表单支持线上服务启用的 Cloudflare Turnstile 人机验证。

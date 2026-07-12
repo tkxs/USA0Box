@@ -1,7 +1,8 @@
 import { Alert, Button, PasswordInput, Stack, Text, TextInput } from '@mantine/core'
-import { useCallback } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Modal } from '@/components/layout/Overlay'
-import { useSub2APISiteName } from '@/hooks/useSub2APISiteName'
+import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/TurnstileWidget'
+import { useSub2APIPublicSettings, useSub2APISiteName } from '@/hooks/useSub2APISiteName'
 import { useLogin } from './useLogin'
 
 interface EmailCodeLoginModalProps {
@@ -14,17 +15,33 @@ interface EmailCodeLoginModalProps {
 export function EmailCodeLoginModal({ opened, onClose, onLoginSuccess }: EmailCodeLoginModalProps) {
   const login = useLogin({ onLoginSuccess })
   const siteName = useSub2APISiteName()
+  const publicSettingsQuery = useSub2APIPublicSettings()
+  const [turnstileToken, setTurnstileToken] = useState('')
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null)
+  const turnstileEnabled = Boolean(
+    publicSettingsQuery.data?.turnstile_enabled && publicSettingsQuery.data.turnstile_site_key
+  )
   const submitting = login.loginState === 'submitting'
 
   const handleClose = useCallback(() => {
     login.reset()
+    setTurnstileToken('')
     onClose()
   }, [login, onClose])
 
   const handleSubmit = useCallback(async () => {
-    const success = login.requiresTwoFactor ? await login.verifyTwoFactor() : await login.submit()
+    const success = login.requiresTwoFactor ? await login.verifyTwoFactor() : await login.submit(turnstileToken)
     if (success) handleClose()
-  }, [handleClose, login])
+  }, [handleClose, login, turnstileToken])
+
+  const handleTurnstileExpire = useCallback(() => setTurnstileToken(''), [])
+  const handleTurnstileError = useCallback(() => setTurnstileToken(''), [])
+
+  useEffect(() => {
+    if (login.loginState !== 'error') return
+    setTurnstileToken('')
+    turnstileRef.current?.reset()
+  }, [login.loginState])
 
   return (
     <Modal
@@ -82,6 +99,16 @@ export function EmailCodeLoginModal({ opened, onClose, onLoginSuccess }: EmailCo
           />
         )}
 
+        {!login.requiresTwoFactor && turnstileEnabled && (
+          <TurnstileWidget
+            ref={turnstileRef}
+            siteKey={publicSettingsQuery.data?.turnstile_site_key || ''}
+            onVerify={setTurnstileToken}
+            onExpire={handleTurnstileExpire}
+            onError={handleTurnstileError}
+          />
+        )}
+
         {login.loginError && (
           <Alert color="red" variant="light" title="登录失败">
             {login.loginError}
@@ -92,7 +119,11 @@ export function EmailCodeLoginModal({ opened, onClose, onLoginSuccess }: EmailCo
           fullWidth
           onClick={() => void handleSubmit()}
           loading={submitting}
-          disabled={login.requiresTwoFactor ? !login.canVerifyTwoFactor : !login.canSubmit}
+          disabled={
+            login.requiresTwoFactor
+              ? !login.canVerifyTwoFactor
+              : !login.canSubmit || (turnstileEnabled && !turnstileToken)
+          }
         >
           {login.requiresTwoFactor ? '验证并登录' : '登录'}
         </Button>
