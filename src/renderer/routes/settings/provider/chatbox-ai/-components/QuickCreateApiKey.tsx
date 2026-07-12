@@ -15,7 +15,13 @@ import { IconCheck, IconCopy, IconKey, IconPlus } from '@tabler/icons-react'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Modal } from '@/components/layout/Overlay'
-import { createSub2APIKey, getSub2APIAvailableGroups, type Sub2APIGroup, type Sub2APIKey } from '@/packages/sub2api'
+import {
+  createSub2APIKey,
+  getSub2APIAvailableGroups,
+  getSub2APIGroupRateMultiplier,
+  type Sub2APIGroup,
+  type Sub2APIKey,
+} from '@/packages/sub2api'
 import queryClient from '@/stores/queryClient'
 
 interface QuickCreateApiKeyProps {
@@ -171,7 +177,7 @@ export function QuickCreateApiKey({ onCreated }: QuickCreateApiKeyProps) {
                   <Text size="xs" c="chatbox-tertiary">
                     平台：{getPlatformLabel(selectedGroup.platform)} / 类型：
                     {selectedGroup.subscription_type === 'subscription' ? '订阅' : '标准'} / 费率：
-                    {selectedGroup.rate_multiplier}x
+                    {getSub2APIGroupRateMultiplier(selectedGroup)}x
                   </Text>
                   {selectedGroup.description && (
                     <Text size="xs" c="chatbox-tertiary">

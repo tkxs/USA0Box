@@ -5,6 +5,7 @@ import {
   exchangeSub2APIAuthorizationCode,
   getSub2APIAccountConfig,
   getSub2APIAvailableGroups,
+  getSub2APIGroupRateMultiplier,
   getSub2APIKeys,
   getSub2APIModels,
   getSub2APISiteName,
@@ -125,6 +126,37 @@ describe('SUB2API client', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ success: true, data: { site_name: ' USA-零 ' } })))
 
     await expect(getSub2APISiteName()).resolves.toBe('USA-零')
+  })
+
+  it('accepts the current SUB2API code envelope', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ code: 0, message: 'success', data: { site_name: 'USA-零' } }))
+    )
+
+    await expect(getSub2APISiteName()).resolves.toBe('USA-零')
+  })
+
+  it('rejects a non-zero SUB2API response code', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ code: 4001, message: '请求无效', data: null })))
+
+    await expect(getSub2APISiteName()).rejects.toThrow('请求无效')
+  })
+
+  it('uses the effective group rate multiplier when provided', () => {
+    expect(
+      getSub2APIGroupRateMultiplier({
+        id: 1,
+        name: 'default',
+        description: null,
+        platform: 'openai',
+        rate_multiplier: 1,
+        user_rate_multiplier: 1.2,
+        effective_rate_multiplier: 1.5,
+        status: 'active',
+        subscription_type: 'standard',
+      })
+    ).toBe(1.5)
   })
 
   it('uses an empty site name when public settings do not provide one', async () => {

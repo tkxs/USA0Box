@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import Divider from '@/components/common/Divider'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
 import { useIsSmallScreen } from '@/hooks/useScreenChange'
-import type { Sub2APIGroup } from '@/packages/sub2api'
+import { getSub2APIGroupRateMultiplier, type Sub2APIGroup } from '@/packages/sub2api'
 import { getSub2APIGroupProviderId } from '@/packages/sub2api-provider'
 import { useSettingsStore } from '@/stores/settingsStore'
 
@@ -85,7 +85,7 @@ export function Sub2APIGroupList({ groups, loading, error }: Sub2APIGroupListPro
                         {platformLabels[group.platform]}
                       </Badge>
                       <Badge size="xs" variant="outline" color="gray">
-                        倍率 {group.rate_multiplier}x
+                        倍率 {getSub2APIGroupRateMultiplier(group)}x
                       </Badge>
                     </Flex>
                   </Stack>

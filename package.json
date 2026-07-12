@@ -1,7 +1,7 @@
 {
   "name": "zerobox",
   "productName": "ZeroBox",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "engines": {
     "node": ">=22.12.0 <25.0.0",
     "pnpm": ">=10.17.0"
@@ -59,7 +59,7 @@
     "mobile:sync:android": "pnpm run mobile:version && cross-env CHATBOX_BUILD_TARGET=mobile_app CHATBOX_BUILD_PLATFORM=android electron-vite build && pnpm run delete-sourcemaps && npx cap sync android",
     "mobile:ios": "pnpm run mobile:sync:ios && npx cap open ios",
     "mobile:android": "pnpm run mobile:sync:android && npx cap open android",
-    "mobile:assets": "npx capacitor-assets generate --ios --android",
+    "mobile:assets": "node scripts/generate-mobile-icons.mjs",
     "prepare": "node -e \"try { require('husky') } catch(e) { process.exit(0) }\" && husky || true",
     "check:error-i18n-keys": "node script/sync-error-i18n-keys.mjs --check",
     "sync:error-i18n-keys": "node script/sync-error-i18n-keys.mjs",

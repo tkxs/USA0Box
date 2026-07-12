@@ -42,6 +42,8 @@ export interface Sub2APIGroup {
   description: string | null
   platform: 'anthropic' | 'openai' | 'gemini' | 'antigravity' | 'grok'
   rate_multiplier: number
+  user_rate_multiplier?: number
+  effective_rate_multiplier?: number
   status: 'active' | 'inactive'
   subscription_type: 'standard' | 'subscription'
 }
@@ -89,7 +91,8 @@ export interface Sub2APIOAuthTokens {
 }
 
 interface ApiEnvelope<T> {
-  success: boolean
+  success?: boolean
+  code?: number
   data: T
   message?: string
   error?: { code?: string; message?: string; detail?: string }
@@ -194,11 +197,15 @@ async function parseResponse<T>(response: Response): Promise<T> {
     throw new Error(`服务请求失败（${response.status}）`)
   }
 
-  if (!response.ok || envelope.success === false) {
+  if (!response.ok || envelope.success === false || (typeof envelope.code === 'number' && envelope.code !== 0)) {
     const message = envelope.error?.detail || envelope.error?.message || envelope.message
     throw new Error(message || `服务请求失败（${response.status}）`)
   }
   return envelope.data
+}
+
+export function getSub2APIGroupRateMultiplier(group: Sub2APIGroup): number {
+  return group.effective_rate_multiplier ?? group.user_rate_multiplier ?? group.rate_multiplier
 }
 
 async function publicRequest<T>(path: string, init?: RequestInit): Promise<T> {
