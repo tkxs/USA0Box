@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { authInfoStore } from '@/stores/authInfoStore'
 import {
   createSub2APIKey,
+  exchangeSub2APIAuthorizationCode,
   getSub2APIAccountConfig,
   getSub2APIAvailableGroups,
   getSub2APIKeys,
@@ -91,6 +92,35 @@ describe('SUB2API client', () => {
     })
   })
 
+  it('exchanges a PKCE authorization code using an OAuth form request', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      jsonResponse({
+        access_token: 'access-1',
+        refresh_token: 'refresh-1',
+        token_type: 'Bearer',
+        expires_in: 600,
+      })
+    )
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      exchangeSub2APIAuthorizationCode({
+        clientId: 'zerobox-android',
+        code: 'one-time-code',
+        redirectUri: 'https://usa0.top/app/zerobox/callback',
+        codeVerifier: 'verifier',
+      })
+    ).resolves.toMatchObject({ accessToken: 'access-1', refreshToken: 'refresh-1' })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://usa0.top/api/v1/app-auth/token',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: expect.stringContaining('grant_type=authorization_code'),
+      })
+    )
+  })
+
   it('loads the configured site name from public settings', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(jsonResponse({ success: true, data: { site_name: ' USA-零 ' } })))
 
@@ -139,7 +169,7 @@ describe('SUB2API client', () => {
 
     await expect(getSub2APIAvailableGroups()).resolves.toEqual(groups)
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://usa0.top/api/v1/groups/available',
+      'https://usa0.top/api/v1/app/groups',
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer access-1' }),
       })
@@ -163,7 +193,7 @@ describe('SUB2API client', () => {
 
     await expect(getSub2APIKeys()).resolves.toEqual(keys)
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://usa0.top/api/v1/keys?page=1&page_size=100',
+      'https://usa0.top/api/v1/app/keys?page=1&page_size=100',
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer access-1' }),
       })
@@ -210,11 +240,11 @@ describe('SUB2API client', () => {
 
     await expect(createSub2APIKey({ name: ' Chatbox ', groupId: 1 })).resolves.toEqual(createdKey)
     expect(fetchMock).toHaveBeenCalledWith(
-      'https://usa0.top/api/v1/keys',
+      'https://usa0.top/api/v1/app/groups/1/keys',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ Authorization: 'Bearer access-1' }),
-        body: JSON.stringify({ name: 'Chatbox', group_id: 1 }),
+        body: JSON.stringify({ name: 'Chatbox' }),
       })
     )
   })
@@ -227,10 +257,7 @@ describe('SUB2API client', () => {
       .mockResolvedValueOnce(jsonResponse({ success: false, message: 'expired' }, 401))
       .mockResolvedValueOnce(jsonResponse({ success: false, message: 'expired' }, 401))
       .mockResolvedValueOnce(
-        jsonResponse({
-          success: true,
-          data: { access_token: 'access-2', refresh_token: 'refresh-2', expires_in: 3600, token_type: 'Bearer' },
-        })
+        jsonResponse({ access_token: 'access-2', refresh_token: 'refresh-2', expires_in: 3600, token_type: 'Bearer' })
       )
       .mockResolvedValueOnce(jsonResponse({ success: true, data: { id: 1, email: 'admin@example.com' } }))
       .mockResolvedValueOnce(jsonResponse({ success: true, data: { items: [], total: 0 } }))

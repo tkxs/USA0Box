@@ -213,6 +213,10 @@ export default class TestPlatform implements Platform {
     return () => {}
   }
 
+  public onSub2APIOAuthCallback(_callback: (url: string) => void): () => void {
+    return () => undefined
+  }
+
   public async openLink(url: string): Promise<void> {
     // no-op in test
   }

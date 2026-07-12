@@ -43,6 +43,7 @@ export interface Platform extends Storage {
   onUpdaterError?(callback: (data: { message: string }) => void): () => void
   checkForUpdate?(): Promise<{ started: boolean }>
   onNavigate?(callback: (path: string) => void): () => void
+  onSub2APIOAuthCallback(callback: (url: string) => void): () => void
   openLink(url: string): Promise<void>
   getDeviceName(): Promise<string>
   getInstanceName(): Promise<string>

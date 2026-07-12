@@ -92,6 +92,10 @@ export default class DesktopPlatform implements Platform {
   public onNavigate(callback: (path: string) => void): () => void {
     return window.electronAPI.onNavigate(callback)
   }
+
+  public onSub2APIOAuthCallback(_callback: (url: string) => void): () => void {
+    return () => undefined
+  }
   public async openLink(url: string): Promise<void> {
     return this.ipc.invoke('openLink', url)
   }

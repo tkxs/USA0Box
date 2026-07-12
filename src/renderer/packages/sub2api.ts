@@ -1,4 +1,5 @@
 import type { ProviderModelInfo } from '@shared/types'
+import platform from '@/platform'
 import { authInfoStore } from '@/stores/authInfoStore'
 import { fetchCrossPlatform } from '@/utils/request'
 
@@ -79,6 +80,14 @@ export type Sub2APIDeviceTokenResult =
   | { type: 'expired' }
   | { type: 'authenticated'; accessToken: string; refreshToken: string; user: Sub2APIUser }
 
+export interface Sub2APIOAuthTokens {
+  accessToken: string
+  refreshToken: string
+  expiresIn?: number
+  scope?: string
+  tokenType?: 'Bearer' | 'DPoP'
+}
+
 interface ApiEnvelope<T> {
   success: boolean
   data: T
@@ -105,6 +114,16 @@ interface DeviceAuthorizationResponse {
 
 interface DeviceTokenResponse extends Partial<TokenResponse> {
   status?: 'authorization_pending' | 'slow_down' | 'access_denied' | 'expired_token' | 'approved'
+}
+
+interface OAuthTokenResponse {
+  access_token?: string
+  refresh_token?: string
+  expires_in?: number
+  scope?: string
+  token_type?: 'Bearer' | 'DPoP'
+  error?: string
+  error_description?: string
 }
 
 interface PaginatedResponse<T> {
@@ -199,15 +218,31 @@ async function refreshTokens() {
   const tokens = authInfoStore.getState().getTokens()
   if (!tokens) throw new Error('登录会话不存在')
 
-  const result = await publicRequest<Omit<TokenResponse, 'user'>>('/auth/refresh', {
+  const response = await fetchCrossPlatform(`${getSub2APIApiBaseUrl()}/app-auth/token`, {
     method: 'POST',
-    body: JSON.stringify({ refresh_token: tokens.refreshToken }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      client_id: await getSub2APIOAuthClientId(),
+      refresh_token: tokens.refreshToken,
+    }).toString(),
   })
+  const result = (await response.json().catch(() => undefined)) as OAuthTokenResponse | undefined
+  if (!response.ok || !result || result.error) {
+    throw new Error(result?.error_description || result?.error || `登录会话刷新失败（${response.status}）`)
+  }
   if (!result.refresh_token) throw new Error('服务未返回刷新令牌')
+  if (!result.access_token) throw new Error('服务未返回访问令牌')
 
   const nextTokens = { accessToken: result.access_token, refreshToken: result.refresh_token }
   authInfoStore.getState().setTokens(nextTokens)
   return nextTokens
+}
+
+async function getSub2APIOAuthClientId() {
+  if (platform.type === 'desktop') return 'zerobox-desktop'
+  if (platform.type === 'mobile') return (await platform.getPlatform()) === 'ios' ? 'zerobox-ios' : 'zerobox-android'
+  return 'zerobox-web'
 }
 
 function refreshTokensOnce() {
@@ -313,39 +348,74 @@ export async function pollSub2APIDeviceAuthorization(
   }
 }
 
+export async function exchangeSub2APIAuthorizationCode(params: {
+  clientId: string
+  code: string
+  redirectUri: string
+  codeVerifier: string
+  signal?: AbortSignal
+}): Promise<Sub2APIOAuthTokens> {
+  const response = await fetchCrossPlatform(`${getSub2APIApiBaseUrl()}/app-auth/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: params.clientId,
+      code: params.code,
+      redirect_uri: params.redirectUri,
+      code_verifier: params.codeVerifier,
+    }).toString(),
+    signal: params.signal,
+  })
+  const result = (await response.json().catch(() => undefined)) as OAuthTokenResponse | undefined
+  if (!response.ok || result?.error) {
+    throw new Error(result?.error_description || result?.error || `授权令牌交换失败（${response.status}）`)
+  }
+  if (!result?.access_token || !result.refresh_token) {
+    throw new Error('授权服务未返回完整的登录令牌')
+  }
+  return {
+    accessToken: result.access_token,
+    refreshToken: result.refresh_token,
+    expiresIn: result.expires_in,
+    scope: result.scope,
+    tokenType: result.token_type,
+  }
+}
+
 export async function logoutFromSub2API() {
   const tokens = authInfoStore.getState().getTokens()
   if (!tokens) return
-  await publicRequest('/auth/logout', {
+  await fetchCrossPlatform(`${getSub2APIApiBaseUrl()}/app-auth/revoke`, {
     method: 'POST',
-    body: JSON.stringify({ refresh_token: tokens.refreshToken }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ token: tokens.refreshToken, token_type_hint: 'refresh_token' }).toString(),
   }).catch(() => undefined)
 }
 
 export async function getSub2APIAccountConfig(): Promise<Sub2APIAccountConfig> {
   const [user, keys, subscriptions] = await Promise.all([
-    authenticatedRequest<Sub2APIUser>('/auth/me'),
-    authenticatedRequest<PaginatedResponse<Sub2APIKey>>('/keys?page=1&page_size=100'),
-    authenticatedRequest<Sub2APISubscription[]>('/subscriptions'),
+    authenticatedRequest<Sub2APIUser>('/app/me'),
+    authenticatedRequest<PaginatedResponse<Sub2APIKey>>('/app/keys?page=1&page_size=100'),
+    authenticatedRequest<Sub2APISubscription[]>('/app/subscriptions'),
   ])
   return { user, apiKeys: keys.items, subscriptions }
 }
 
 export async function getSub2APIKeys(): Promise<Sub2APIKey[]> {
-  const keys = await authenticatedRequest<PaginatedResponse<Sub2APIKey>>('/keys?page=1&page_size=100')
+  const keys = await authenticatedRequest<PaginatedResponse<Sub2APIKey>>('/app/keys?page=1&page_size=100')
   return keys.items
 }
 
 export function getSub2APIAvailableGroups(): Promise<Sub2APIGroup[]> {
-  return authenticatedRequest<Sub2APIGroup[]>('/groups/available')
+  return authenticatedRequest<Sub2APIGroup[]>('/app/groups')
 }
 
 export function createSub2APIKey(params: { name: string; groupId: number }): Promise<Sub2APIKey> {
-  return authenticatedRequest<Sub2APIKey>('/keys', {
+  return authenticatedRequest<Sub2APIKey>(`/app/groups/${params.groupId}/keys`, {
     method: 'POST',
     body: JSON.stringify({
       name: params.name.trim(),
-      group_id: params.groupId,
     }),
   })
 }

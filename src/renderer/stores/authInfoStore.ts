@@ -1,7 +1,8 @@
 import { createStore, useStore } from 'zustand'
-import { persist, subscribeWithSelector } from 'zustand/middleware'
+import { createJSONStorage, persist, subscribeWithSelector } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import type { AuthTokens } from '../routes/settings/provider/chatbox-ai/-components/types'
+import { secureAuthStorage } from './secureAuthStorage'
 
 interface AuthTokensState {
   accessToken: string | null
@@ -52,7 +53,9 @@ export const authInfoStore = createStore<AuthTokensState & AuthTokensActions>()(
       })),
       {
         name: 'sub2api-auth-info',
-        version: 1,
+        version: 2,
+        storage: createJSONStorage(() => secureAuthStorage),
+        migrate: (persistedState) => persistedState as AuthTokensState,
         partialize: (state) => ({
           accessToken: state.accessToken,
           refreshToken: state.refreshToken,

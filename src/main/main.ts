@@ -33,6 +33,7 @@ import MenuBuilder from './menu'
 import { registerOAuthHandlers } from './oauth'
 import * as proxy from './proxy'
 import { registerSandboxHandlers } from './sandbox'
+import { registerSecureStorageHandlers } from './secure-storage'
 import { registerSkillsHandlers } from './skills'
 import {
   delStoreBlob,
@@ -43,6 +44,7 @@ import {
   setStoreBlob,
   store,
 } from './store-node'
+import { registerSub2APIAuthHandlers } from './sub2api-auth'
 import * as windowState from './window_state'
 
 const knowledgeBaseInitPromise = import('./knowledge-base/index.js')
@@ -845,3 +847,5 @@ ipcMain.handle('window:is-maximized', () => {
 registerSandboxHandlers()
 registerSkillsHandlers()
 registerOAuthHandlers()
+registerSub2APIAuthHandlers()
+registerSecureStorageHandlers()

@@ -56,6 +56,9 @@ export default class WebPlatform extends IndexedDBStorage implements Platform {
   public onUpdateDownloaded(callback: () => void): () => void {
     return () => null
   }
+  public onSub2APIOAuthCallback(_callback: (url: string) => void): () => void {
+    return () => undefined
+  }
   public async openLink(url: string): Promise<void> {
     window.open(url)
   }

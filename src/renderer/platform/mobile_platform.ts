@@ -27,6 +27,8 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
   public exporter = new MobileExporter()
 
   private navigationCallback: ((path: string) => void) | null = null
+  private sub2APIOAuthCallback: ((url: string) => void) | null = null
+  private pendingSub2APIOAuthCallback: string | null = null
   private _imageGenerationStorage: ImageGenerationStorage | null = null
   private _taskSessionStorage: TaskSessionStorage | null = null
   private _sessionMetaStorage: SessionMetaStorage | null = null
@@ -36,14 +38,47 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
     mobileLogger.init().catch((e) => console.error('Failed to init mobile logger:', e))
     // 监听深度链接 (Deep Links)
     App.addListener('appUrlOpen', (event) => {
-      console.debug('App URL opened:', event.url)
+      console.debug('App URL opened')
       this.handleDeepLink(event.url)
     })
+    void App.getLaunchUrl()
+      .then((event) => {
+        if (event?.url) this.handleDeepLink(event.url)
+      })
+      .catch((error) => console.error('Failed to read launch URL:', error))
   }
 
   // 处理深度链接
   private handleDeepLink(url: string): void {
     try {
+      if (url.length > 4096) return
+      const callbackUrl = new URL(url)
+      const isVerifiedWebCallback =
+        callbackUrl.origin === 'https://usa0.top' &&
+        callbackUrl.username === '' &&
+        callbackUrl.password === '' &&
+        callbackUrl.pathname === '/app/zerobox/callback' &&
+        callbackUrl.hash === ''
+      const isCustomSchemeCallback =
+        callbackUrl.protocol === 'zerobox:' &&
+        callbackUrl.hostname === 'oauth' &&
+        callbackUrl.username === '' &&
+        callbackUrl.password === '' &&
+        callbackUrl.pathname === '/callback' &&
+        callbackUrl.hash === ''
+
+      if (isVerifiedWebCallback || isCustomSchemeCallback) {
+        console.debug('SUB2API OAuth callback received')
+        void Browser.close().catch(() => undefined)
+        const safeCallbackUrl = callbackUrl.toString()
+        if (this.sub2APIOAuthCallback) {
+          this.sub2APIOAuthCallback(safeCallbackUrl)
+        } else {
+          this.pendingSub2APIOAuthCallback = safeCallbackUrl
+        }
+        return
+      }
+
       // 支持 chatbox:// 和 chatbox-dev:// 两种协议（归一化处理）
       const normalizedUrl = url.replace(/^chatbox-dev:\/\//, 'chatbox://')
       const parsedUrl = new URL(normalizedUrl)
@@ -61,9 +96,9 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
         // 不需要，实际跳回到 app 后业务hooks useLogin 会处理后续动作
       }
 
-      console.warn('Unhandled deep link:', url)
-    } catch (error) {
-      console.error('Failed to handle deep link:', error)
+      console.warn('Unhandled deep link')
+    } catch {
+      console.error('Failed to handle deep link')
     }
   }
 
@@ -81,6 +116,18 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
     this.navigationCallback = callback
     return () => {
       this.navigationCallback = null
+    }
+  }
+
+  public onSub2APIOAuthCallback(callback: (url: string) => void): () => void {
+    this.sub2APIOAuthCallback = callback
+    if (this.pendingSub2APIOAuthCallback) {
+      const pendingCallback = this.pendingSub2APIOAuthCallback
+      this.pendingSub2APIOAuthCallback = null
+      callback(pendingCallback)
+    }
+    return () => {
+      if (this.sub2APIOAuthCallback === callback) this.sub2APIOAuthCallback = null
     }
   }
 

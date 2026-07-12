@@ -28,6 +28,9 @@ importers:
 
   .:
     dependencies:
+      '@aparajita/capacitor-secure-storage':
+        specifier: 7.1.6
+        version: 7.1.6
       '@libsql/client':
         specifier: ^0.15.6
         version: 0.15.15
@@ -969,6 +972,10 @@ packages:
     resolution: {integrity: sha512-kdzOfa1X7gB1bmkLsdMQYAE+YpvE6LO7ZjYu4HhCvxyUQl0cvU+B806QW7yp5c/m6swZuiboogtHKAfXRRTRYA==}
     engines: {node: '>=18.0.0'}
     hasBin: true
+
+  '@aparajita/capacitor-secure-storage@7.1.6':
+    resolution: {integrity: sha512-KIfLOm/oSciUiWsOMtMv2nzlnwW3LERid0DvZ3djt7UORBQvFqpvSefiLG5kkc8D34pGkb2ZqAz0ZprrI9LiTQ==}
+    engines: {node: '>=20.0.0'}
 
   '@apidevtools/json-schema-ref-parser@11.9.3':
     resolution: {integrity: sha512-60vepv88RwcJtSHrD6MjIL6Ta3SOYbgfnkHb+ppAVK+o9mXprRtulx7VlRl3lN3bbvysAfCS7WMVfhUYemB0IQ==}
@@ -13732,6 +13739,13 @@ snapshots:
       lodash-es: 4.17.23
       shell-quote: 1.8.3
       zod: 3.25.76
+
+  '@aparajita/capacitor-secure-storage@7.1.6':
+    dependencies:
+      '@capacitor/android': 7.4.5(@capacitor/core@7.4.5)
+      '@capacitor/app': 7.1.1(@capacitor/core@7.4.5)
+      '@capacitor/core': 7.4.5
+      '@capacitor/ios': 7.4.5(@capacitor/core@7.4.5)
 
   '@apidevtools/json-schema-ref-parser@11.9.3':
     dependencies:
