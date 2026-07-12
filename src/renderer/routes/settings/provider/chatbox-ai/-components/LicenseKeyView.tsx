@@ -59,7 +59,7 @@ export const LicenseKeyView = forwardRef<HTMLDivElement, LicenseKeyViewProps>(({
             c="chatbox-tertiary"
             px={0}
             h={24}
-            onClick={() => platform.openLink('https://chatboxai.app')}
+            onClick={() => platform.openLink('https://usa0.top')}
           >
             <ScalableIcon icon={IconExternalLink} size={24} />
           </Button>

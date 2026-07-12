@@ -4,8 +4,6 @@
  */
 
 import type { TFunction } from 'i18next'
-import { confetti } from '@/components/Confetti'
-import { onboardingStore } from '@/stores/onboardingStore'
 import { activate as activateLicense } from '@/stores/premiumActions'
 import type {
   GuideMessagePart,
@@ -33,7 +31,7 @@ export async function parseStreamResponse(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   callbacks: StreamParserCallbacks
 ): Promise<void> {
-  const { setMessages, setOnboardingStep, pendingUpdateRef, pendingTimeouts, markGuideCompleted, t } = callbacks
+  const { setMessages, pendingUpdateRef, markGuideCompleted, t } = callbacks
 
   const decoder = new TextDecoder()
   let accumulatedContent = ''
@@ -161,21 +159,10 @@ export async function parseStreamResponse(
             toolPart.state = 'result'
             toolPart.result = (event.output || event.result) as Record<string, unknown>
 
-            // Handle mark_completed tool
+            // Handle mark_completed tool through the shared completion gate so users
+            // without a selected key are still guided to create one first.
             if (toolPart.toolName === 'mark_completed') {
-              onboardingStore.getState().markCompleted()
-              setOnboardingStep('completed')
-              // Check show_confetti from args or result
-              const showConfetti =
-                (toolPart.args as { show_confetti?: boolean })?.show_confetti ||
-                (toolPart.result as { show_confetti?: boolean })?.show_confetti
-              if (showConfetti) {
-                const timeoutId = setTimeout(() => {
-                  pendingTimeouts.delete(timeoutId)
-                  confetti()
-                }, 300)
-                pendingTimeouts.add(timeoutId)
-              }
+              await markGuideCompleted()
             }
 
             // Handle activate_license tool
@@ -214,8 +201,8 @@ export async function parseStreamResponse(
 /**
  * Handle activate_license tool execution.
  *
- * On success, delegates to the shared markGuideCompleted handler — same path as OAuth login success —
- * so both paths render an identical "you're all set" message + buttons + confetti. On failure,
+ * On success, delegates to the shared markGuideCompleted handler so completion still passes
+ * through the local config gate. On failure,
  * appends an inline error to the in-flight assistant message.
  */
 async function handleActivateLicense(
@@ -232,7 +219,7 @@ async function handleActivateLicense(
   if (!licenseKey) return
 
   const failureMessage = t(
-    'Failed to activate the license key. You can try activating manually in **Settings**, or log in to the [Chatbox AI website](https://chatboxai.app) to view your license details.'
+    'Failed to activate the license key. You can try activating manually in **Settings**, or log in to the [ZeroBox website](https://usa0.top) to view your account details.'
   )
 
   try {

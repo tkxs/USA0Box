@@ -67,7 +67,7 @@ export function useGuideSession(): UseGuideSessionReturn {
   const pendingUpdateRef = useRef<number | null>(null)
   /** markGuideCompleted body has run once. */
   const completionTriggeredRef = useRef(false)
-  /** awaiting-card has been pushed once (idempotency for repeated Claim Free Plan clicks). */
+  /** awaiting-card has been pushed once (idempotency for legacy claim tool responses). */
   const claimWaitingShownRef = useRef(false)
   /** celebration message has been pushed once (terminal). */
   const celebrationShownRef = useRef(false)
@@ -159,15 +159,16 @@ export function useGuideSession(): UseGuideSessionReturn {
       !forceSelectionOnce &&
       shouldGuideEnterCompleted({
         onboardingCompleted,
-        isLoggedIn,
         hasValidConfig: configValid,
       })
 
     if (enterCompleted) {
       // User already has valid config, show completion message
-      const configCompleteMsg = String(t(
-        "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
-      ))
+      const configCompleteMsg = String(
+        t(
+          "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
+        )
+      )
       setMessages([
         {
           id: generateMessageId(),
@@ -213,7 +214,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
 - 🆘 [Help Center](`),
             helpCenterUrl,
             t(`) — FAQs
-- 📮 Contact us: hi@chatboxai.com
+- 📮 Contact us: https://github.com/tkxs/USA0Box/issues
 
 💡 Follow Chatbox on [Xiaohongshu](https://www.xiaohongshu.com/user/profile/67b581b6000000000e01d11f) for the latest updates and tips
 
@@ -238,7 +239,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
 - 🆘 [Help Center](`),
             helpCenterUrl,
             t(`) — FAQs
-- 📮 Contact us: hi@chatboxai.com
+- 📮 Contact us: https://github.com/tkxs/USA0Box/issues
 
 ---
 
@@ -516,13 +517,10 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
   /**
    * Mark the guide flow as completed.
    *
-   * Always sets onboardingStore.completed = true so the app does not re-enter the guide on next launch
-   * (regardless of whether the user actually has a license — they have explicitly finished the flow).
+   * Only sets onboardingStore.completed = true after the app has a usable local config.
    *
-   * Branches the rendered UI:
-   * - has license: stream celebration immediately (terminal state).
-   * - no license: stream the Claim Free Plan CTA. Polling and waiting only kicks in if/when the user
-   *   actually clicks Claim — see onClaimStart below.
+   * Legacy backend tool calls may still ask to mark the guide complete, but SUB2API
+   * users must select/create a group key before the guide becomes terminal.
    */
   const markGuideCompleted = useCallback(async () => {
     if (completionTriggeredRef.current) return
@@ -537,39 +535,82 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
       return prev
     })
 
+    const hasLicense = Boolean(settingsStore.getState().licenseKey)
+    const configValid = checkHasValidConfig()
+
+    if (!hasLicense && !configValid) {
+      completionTriggeredRef.current = false
+      setHasValidConfig(false)
+      setOnboardingStep('login_flow')
+      await streamFixedMessage(
+        t(
+          "You're logged in. Next, choose a model group and create or select a group key. Once a key is selected, ZeroBox will be ready to use."
+        ),
+        [
+          {
+            type: 'tool-show_group_key_settings_button',
+            toolCallId: `group-key-settings-${Date.now()}`,
+            toolName: 'show_group_key_settings_button',
+            state: 'result',
+            result: { displayed: true },
+          },
+        ]
+      )
+      return
+    }
+
     setHasValidConfig(true)
     onboardingStore.getState().markCompleted()
+    setOnboardingStep('completed')
 
-    const hasLicense = Boolean(settingsStore.getState().licenseKey)
     if (hasLicense) {
       await renderCelebration()
     } else {
       await streamFixedMessage(
         t(
-          "You're logged in! Claim your **free plan** below to unlock Chatbox AI features. If you have any questions, feel free to click the Help button in the bottom left corner anytime."
+          "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
         ),
         [
-          {
-            type: 'tool-show_free_trial_link',
-            toolCallId: `free-trial-link-${Date.now()}`,
-            toolName: 'show_free_trial_link',
-            state: 'result',
-            result: { displayed: true },
-          },
+          createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
+            label: String(t('Click here to start a new chat')),
+          }),
+          createSuggestedQuestionsToolPart(`suggested-${Date.now()}`),
         ]
       )
     }
   }, [streamFixedMessage, t, renderCelebration])
 
   /**
-   * Triggered by FreeTrialLink after the claim page successfully opens. Streams the awaiting card
-   * which owns the polling lifecycle. Idempotent: re-clicking Claim does not stack cards.
+   * Login is only the first step for SUB2API. The guide completes after the user
+   * creates/selects a group key, which is detected by handleConfigComplete().
+   */
+  const handleLoginSuccess = useCallback(async () => {
+    await streamFixedMessage(
+      t(
+        "You're logged in. Next, choose a model group and create or select a group key. Once a key is selected, ZeroBox will be ready to use."
+      ),
+      [
+        {
+          type: 'tool-show_group_key_settings_button',
+          toolCallId: `group-key-settings-${Date.now()}`,
+          toolName: 'show_group_key_settings_button',
+          state: 'result',
+          result: { displayed: true },
+        },
+      ]
+    )
+    setOnboardingStep('login_flow')
+  }, [streamFixedMessage, t])
+
+  /**
+   * Compatibility path for older guide tool responses. It now points the user to
+   * SUB2API group-key setup instead of the original plan claim flow.
    */
   const onClaimStart = useCallback(async () => {
     if (claimWaitingShownRef.current) return
     claimWaitingShownRef.current = true
 
-    await streamFixedMessage(t("We're waiting for you to finish on chatboxai.app..."), [
+    await streamFixedMessage(t('Please select a group and create or choose a key in Settings.'), [
       {
         type: 'tool-show_claim_waiting',
         toolCallId: `claim-waiting-${Date.now()}`,
@@ -740,7 +781,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
         abortControllerRef.current = null
       }
     },
-    [userMessageCount, hasValidConfig, messages, onboardingStep, streamFixedMessage, markGuideCompleted, t]
+    [userMessageCount, hasValidConfig, messages, onboardingStep, isLoggedIn, streamFixedMessage, markGuideCompleted, t]
   )
 
   /**
@@ -903,6 +944,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
     stopGeneration,
     selectUserType,
     markGuideCompleted,
+    handleLoginSuccess,
     onClaimStart,
     onClaimDetected,
     handleConfigComplete,

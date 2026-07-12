@@ -13,7 +13,6 @@ import { JK_EVENTS, JK_PAGE_NAMES } from '@/analytics/jk-events'
 import { ChatboxAIErrorMessage } from '@/components/common/ChatboxAIErrorMessage'
 import { useCopied } from '@/hooks/useCopied'
 import { navigateToSettings } from '@/modals/Settings'
-import { trackingEvent } from '@/packages/event'
 import { buildChatboxUrl } from '@/packages/remote'
 import { translateTexts } from '@/packages/translation'
 import platform from '@/platform'
@@ -446,7 +445,7 @@ export default function MessageErrTips(props: { msg: Message; onRetry?: () => vo
                   pageName: JK_PAGE_NAMES.CHAT_PAGE,
                   content: 'chat_error',
                 })
-                platform.openLink('https://chatboxai.app/login')
+                platform.openLink('https://usa0.top/login')
               }}
             >
               {t('Chatbox AI free trial available')} →

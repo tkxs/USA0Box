@@ -81,7 +81,7 @@ export const ChatboxAIErrorMessage: FC<ChatboxAIErrorMessageProps> = ({
             }}
           />
         ),
-        LinkToHomePage: <LinkTargetBlank href="https://chatboxai.app" />,
+        LinkToHomePage: <LinkTargetBlank href="https://usa0.top" />,
         LinkToAdvancedFileProcessing: (
           <LinkTargetBlank
             href={buildChatboxUrl(

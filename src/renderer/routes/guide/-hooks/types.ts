@@ -5,6 +5,7 @@
 /** Tool part types that can be rendered in the UI */
 export type GuideToolName =
   | 'show_login_button'
+  | 'show_group_key_settings_button'
   | 'show_provider_settings_button'
   | 'show_user_type_cards'
   | 'show_new_chat_button'
@@ -63,7 +64,9 @@ export interface UseGuideSessionReturn {
   stopGeneration: () => void
   selectUserType: (type: UserType) => void
   markGuideCompleted: () => Promise<void>
-  /** Called when user clicks Claim Free Plan; renders the awaiting card and the polling lifecycle begins inside it. */
+  /** Called after account login; guides the user to select or create a group key. */
+  handleLoginSuccess: () => Promise<void>
+  /** Compatibility path for older guide tool responses; points users to group-key setup. */
   onClaimStart: () => Promise<void>
   /** Called by useClaimPolling when a license is detected; activates locally and renders the celebration. */
   onClaimDetected: (license: import('@/packages/remote').UserLicense) => Promise<void>

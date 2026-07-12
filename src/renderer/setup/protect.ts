@@ -32,8 +32,8 @@ function toHomePage() {
 }
 
 const lh = '^_QR]]YAB' // localhost
-const ca = 'QXSGSZNS_\x19UGB' // chatboxai.app
-const hf = 'ZDFCB\x0F\x19\x1DU_UCP_JRX\x1BWBF\x18' // https://chatboxai.app/
+const ca = 'GCS\x03\x1FAYB' // usa0.top
+const hf = 'ZDFCB\x0F\x19\x1DCDU\x07\x1CD]C\x1E' // https://usa0.top/
 
 const ll = '^_QRE\\Y\\' // location
 const hh = 'ZBWU' // href

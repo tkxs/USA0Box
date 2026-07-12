@@ -875,7 +875,7 @@ const KnowledgeBaseDocuments: React.FC<KnowledgeBaseDocumentsProps> = ({ knowled
                             pageName: JK_PAGE_NAMES.SETTING_PAGE,
                             content: 'kb_error',
                           })
-                          platform.openLink('https://chatboxai.app/login')
+                          platform.openLink('https://usa0.top/login')
                         }}
                       >
                         {t('Free trial available')} →

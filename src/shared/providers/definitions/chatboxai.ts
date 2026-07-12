@@ -7,8 +7,8 @@ export const chatboxAIProvider = defineProvider({
   name: 'ZeroBox AI',
   type: ModelProviderType.ChatboxAI,
   urls: {
-    website: 'https://chatboxai.app',
-    docs: 'https://chatboxai.app/help-center',
+    website: 'https://usa0.top',
+    docs: 'https://usa0.top/help-center',
   },
   createModel: (config) => {
     return new ChatboxAI(

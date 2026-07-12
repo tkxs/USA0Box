@@ -13,9 +13,7 @@ export function ChatboxWelcomeCard(props: { mode: HomeWelcomeCardMode; pageName:
   const { mode, pageName, className } = props
   const { t } = useTranslation()
   const language = useLanguage()
-  const [pendingAction, setPendingAction] = useState<'claim-free-plan' | 'purchase-plan' | 'view-more-plans' | null>(
-    null
-  )
+  const [pendingAction, setPendingAction] = useState<'purchase-plan' | null>(null)
   const pendingActionRef = useRef(false)
 
   if (mode === 'none') {
@@ -100,31 +98,15 @@ export function ChatboxWelcomeCard(props: { mode: HomeWelcomeCardMode; pageName:
                 fw={600}
                 flex="0 1 auto"
                 onClick={() => {
-                  if (pendingActionRef.current) return
-
-                  pendingActionRef.current = true
                   trackJkClickEvent(JK_EVENTS.FREE_LICENSE_CLAIM_CLICK, {
                     pageName,
-                    content: 'welcome_card',
+                    content: 'welcome_card_group_key_setup',
                   })
-                  setPendingAction('claim-free-plan')
-                  openLinkWithAuth(
-                    remote.buildChatboxUrl(
-                      `/redirect_app/claim_free_plan/${language}/?utm_source=app&utm_content=provider_cb_login_claim_free`
-                    )
-                  )
-                    .catch((err) => {
-                      console.error('Failed to open claim free plan link:', err)
-                    })
-                    .finally(() => {
-                      pendingActionRef.current = false
-                      setPendingAction(null)
-                    })
+                  navigateToSettings('/provider')
                 }}
-                loading={pendingAction === 'claim-free-plan'}
                 disabled={pendingAction !== null}
               >
-                {t('Claim Free Plan')}
+                选择分组并创建密钥
               </Button>
               <Button
                 size="xs"
@@ -134,27 +116,11 @@ export function ChatboxWelcomeCard(props: { mode: HomeWelcomeCardMode; pageName:
                 fw={400}
                 flex="0 1 auto"
                 onClick={() => {
-                  if (pendingActionRef.current) return
-
-                  pendingActionRef.current = true
-                  setPendingAction('view-more-plans')
-                  openLinkWithAuth(
-                    remote.buildChatboxUrl(
-                      `/redirect_app/view_more_plans/${language}/?utm_source=app&utm_content=provider_cb_login_more_plans`
-                    )
-                  )
-                    .catch((err) => {
-                      console.error('Failed to open view more plans link:', err)
-                    })
-                    .finally(() => {
-                      pendingActionRef.current = false
-                      setPendingAction(null)
-                    })
+                  navigateToSettings('provider')
                 }}
-                loading={pendingAction === 'view-more-plans'}
                 disabled={pendingAction !== null}
               >
-                {t('View More Plans')}
+                {t('Other options')}
               </Button>
             </>
           ) : (

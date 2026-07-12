@@ -65,7 +65,7 @@ function GuidePage() {
     sendMessage,
     stopGeneration,
     selectUserType,
-    markGuideCompleted,
+    handleLoginSuccess,
     onClaimStart,
     onClaimDetected,
     handleConfigComplete,
@@ -309,7 +309,7 @@ function GuidePage() {
               key={message.id}
               message={message}
               onSelectUserType={selectUserType}
-              onLoginSuccess={markGuideCompleted}
+              onLoginSuccess={handleLoginSuccess}
               onQuestionClick={sendMessage}
               onClaimStart={onClaimStart}
               onClaimDetected={onClaimDetected}

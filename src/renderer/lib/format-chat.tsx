@@ -189,8 +189,8 @@ export function formatChatAsMarkdown(sessionName: string, threads: SessionThread
   }
   content += '--------------------\n\n'
   content += `
-<a href="https://chatboxai.app" style="display: flex; align-items: center;">
-<img src='https://chatboxai.app/icon.png' style='width: 40px; height: 40px; padding-right: 6px'>
+<a href="https://usa0.top" style="display: flex; align-items: center;">
+<img src='https://usa0.top/icon.png' style='width: 40px; height: 40px; padding-right: 6px'>
 <b style='font-size:30px'>ZeroBox AI</b>
 </a>
 `
@@ -347,24 +347,24 @@ export async function formatChatAsHtml(sessionName: string, threads: SessionThre
         }
     </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
-    <link rel="shortcut icon" href="https://chatboxai.app/icon.png">
+    <link rel="shortcut icon" href="https://usa0.top/icon.png">
 </head>
 <body class='bg-slate-100'>
     <div class='mx-auto max-w-5xl shadow-md prose bg-white px-2 py-4'>
         <h1 class='flex flex-row justify-between items-center my-4 h-8'>
             <span>${sessionName}</span>
-            <a href="https://chatboxai.app" target="_blank" >
-                <img src='https://chatboxai.app/icon.png' class="w-12">
+            <a href="https://usa0.top" target="_blank" >
+                <img src='https://usa0.top/icon.png' class="w-12">
             </a>
         </h1>
         <hr />
         ${content}
         <hr />
-        <a href="https://chatboxai.app" style="display: flex; align-items: center;" class="text-sky-500" target="_blank">
-            <img src='https://chatboxai.app/icon.png' class="w-12 pr-2">
+        <a href="https://usa0.top" style="display: flex; align-items: center;" class="text-sky-500" target="_blank">
+            <img src='https://usa0.top/icon.png' class="w-12 pr-2">
             <b style='font-size:30px'>ZeroBox AI</b>
         </a>
-        <p><a a href="https://chatboxai.app" target="_blank">https://chatboxai.app</a></p>
+        <p><a a href="https://usa0.top" target="_blank">https://usa0.top</a></p>
     </div>
 </body>
 </html>

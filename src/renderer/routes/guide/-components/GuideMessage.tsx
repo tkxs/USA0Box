@@ -13,6 +13,7 @@ import type { UserLicense } from '@/packages/remote'
 import type { GuideToolPart, GuideUIMessage, UserType } from '../-hooks/useGuideSession'
 import {
   FreeTrialLink,
+  GroupKeySettingsButton,
   LoginButton,
   NewChatButton,
   NewChatTip,
@@ -64,6 +65,9 @@ function ToolPartRenderer({
 
     case 'show_provider_settings_button':
       return <ProviderSettingsButton />
+
+    case 'show_group_key_settings_button':
+      return <GroupKeySettingsButton />
 
     case 'show_new_chat_button': {
       const label = typeof part.result?.label === 'string' ? part.result.label : undefined

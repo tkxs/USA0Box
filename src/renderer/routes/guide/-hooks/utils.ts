@@ -7,7 +7,6 @@ import type { GuideToolPart } from './types'
 
 interface ShouldGuideEnterCompletedInput {
   onboardingCompleted: boolean
-  isLoggedIn: boolean
   hasValidConfig: boolean
 }
 
@@ -27,8 +26,8 @@ export function checkHasValidConfig(): boolean {
     const providers = settings.providers
     const keys = Object.keys(providers)
 
-    // Any provider with API key
-    if (keys.some((key) => !!providers[key].apiKey)) {
+    // Any provider with API key or a selected SUB2API group key
+    if (keys.some((key) => !!providers[key].apiKey || !!providers[key].sub2apiKeyId)) {
       return true
     }
 
@@ -51,7 +50,7 @@ export function checkHasValidConfig(): boolean {
  * Determine whether guide should directly enter completed state.
  */
 export function shouldGuideEnterCompleted(input: ShouldGuideEnterCompletedInput): boolean {
-  return input.onboardingCompleted || input.isLoggedIn || input.hasValidConfig
+  return input.onboardingCompleted || input.hasValidConfig
 }
 
 /**

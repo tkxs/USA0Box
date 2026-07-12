@@ -120,7 +120,7 @@ const FileParseError = NiceModal.create(({ errorCode, fileName }: FileParseError
               }}
             />
           ),
-          LinkToHomePage: <LinkTargetBlank href="https://chatboxai.app" />,
+          LinkToHomePage: <LinkTargetBlank href="https://usa0.top" />,
           LinkToAdvancedFileProcessing: (
             <LinkTargetBlank
               href={buildChatboxUrl(

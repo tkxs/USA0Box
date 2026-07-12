@@ -23,6 +23,11 @@ import {
 } from '../../shared/types'
 import { getOS } from './navigator'
 
+const SUB0BOX_RELEASE_API_URL = 'https://api.github.com/repos/tkxs/USA0Box/releases/latest'
+const SUB0BOX_LATEST_YML_URL = 'https://github.com/tkxs/USA0Box/releases/latest/download/latest.yml'
+const SUB0BOX_RELEASE_NOTES_URL = 'https://github.com/tkxs/USA0Box/releases/latest/download/RELEASE_NOTES.md'
+const SUB2API_WEB_ORIGIN = 'https://usa0.top'
+
 const log = getLogger('remote-api')
 
 let _afetch: ReturnType<typeof createAfetch> | null = null
@@ -116,7 +121,7 @@ export function getChatboxOrigin() {
   } else if (USE_BETA_CHATBOX) {
     return 'https://beta.chatboxai.app'
   } else {
-    return 'https://chatboxai.app'
+    return SUB2API_WEB_ORIGIN
   }
 }
 
@@ -137,16 +142,24 @@ const getChatboxHeaders = async () => {
 // ========== 各个接口方法 ==========
 
 export async function getLatestSub0BoxVersion() {
-  const metadata = await ofetch<string, 'text'>('https://github.com/tkxs/USA0Box/releases/latest/download/latest.yml', {
-    retry: 2,
-    responseType: 'text',
-  })
-  const release = parseYaml(metadata) as { version?: unknown }
-  return typeof release.version === 'string' ? release.version : ''
+  try {
+    const metadata = await ofetch<string, 'text'>(SUB0BOX_LATEST_YML_URL, {
+      retry: 2,
+      responseType: 'text',
+    })
+    const release = parseYaml(metadata) as { version?: unknown }
+    if (typeof release.version === 'string' && release.version.trim()) return release.version.trim()
+  } catch (error) {
+    log.warn('latest.yml update metadata unavailable; falling back to GitHub release API', error)
+  }
+
+  const release = await ofetch<{ tag_name?: string; name?: string }>(SUB0BOX_RELEASE_API_URL, { retry: 2 })
+  const version = (release.tag_name || release.name || '').trim().replace(/^v/i, '')
+  return version
 }
 
 export async function getLatestSub0BoxReleaseNotes() {
-  return await ofetch<string, 'text'>('https://github.com/tkxs/USA0Box/releases/latest/download/RELEASE_NOTES.md', {
+  return await ofetch<string, 'text'>(SUB0BOX_RELEASE_NOTES_URL, {
     retry: 2,
     responseType: 'text',
   })

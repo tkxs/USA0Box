@@ -39,7 +39,7 @@ export function RouteComponent() {
           body: { query: 'Chatbox' },
         })
         setQueritAvailable(true)
-      } catch (e) {
+      } catch {
         setQueritAvailable(false)
       } finally {
         setCheckingQuerit(false)
@@ -56,7 +56,7 @@ export function RouteComponent() {
       try {
         await new BochaSearch(extension.webSearch.bochaApiKey).search('Chatbox')
         setBochaAvailable(true)
-      } catch (e) {
+      } catch {
         setBochaAvailable(false)
       } finally {
         setCheckingBocha(false)
@@ -85,7 +85,7 @@ export function RouteComponent() {
           },
         })
         setTavilyAvaliable(true)
-      } catch (e) {
+      } catch {
         setTavilyAvaliable(false)
       } finally {
         setCheckingTavily(false)
@@ -434,7 +434,7 @@ export function RouteComponent() {
                 pageName: JK_PAGE_NAMES.SETTING_PAGE,
                 content: 'settings_websearch',
               })
-              platform.openLink('https://chatboxai.app/login')
+              platform.openLink('https://usa0.top/login')
             }}
           >
             {t('You can ')}

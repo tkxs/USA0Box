@@ -3,20 +3,18 @@
  */
 
 import { Box, Button, Flex, Stack, Text } from '@mantine/core'
-import { IconCirclePlus, IconExternalLink, IconId, IconInfoCircle, IconSettings } from '@tabler/icons-react'
+import { IconCirclePlus, IconId, IconInfoCircle, IconKey, IconSettings } from '@tabler/icons-react'
 import { useNavigate } from '@tanstack/react-router'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { trackJkClickEvent } from '@/analytics/jk'
 import { JK_EVENTS, JK_PAGE_NAMES } from '@/analytics/jk-events'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
-import { navigateToSettings } from '@/modals/Settings'
 import { useSub2APISiteName } from '@/hooks/useSub2APISiteName'
-import { openLinkWithAuth } from '@/packages/openLinkWithAuth'
-import { buildChatboxUrl } from '@/packages/remote'
+import { navigateToSettings } from '@/modals/Settings'
 import { EmailCodeLoginModal } from '@/routes/settings/provider/chatbox-ai/-components/EmailCodeLoginModal'
 import { authInfoStore } from '@/stores/authInfoStore'
-import { settingsStore, useLanguage } from '@/stores/settingsStore'
+import { useLanguage } from '@/stores/settingsStore'
 
 interface LoginButtonProps {
   onLoginSuccess: () => void
@@ -89,6 +87,22 @@ export function ProviderSettingsButton() {
         variant="outline"
       >
         {t('Open Provider Settings')}
+      </Button>
+    </Flex>
+  )
+}
+
+export function GroupKeySettingsButton() {
+  return (
+    <Flex mt="md" style={guideActionButtonWidthStyle}>
+      <Button
+        leftSection={<ScalableIcon icon={IconKey} size={18} />}
+        onClick={() => navigateToSettings('/provider')}
+        variant="light"
+        fullWidth
+        h={42}
+      >
+        选择分组并创建密钥
       </Button>
     </Flex>
   )
@@ -170,50 +184,29 @@ export function ViewLicenseButton() {
 }
 
 interface FreeTrialLinkProps {
-  /** Optional hook that fires after the link successfully opens — used by the guide flow to start polling. */
+  /** Optional hook retained for compatibility with older guide tool responses. */
   onAfterClick?: () => void
 }
 
-export function FreeTrialLink({ onAfterClick }: FreeTrialLinkProps = {}) {
-  const { t } = useTranslation()
-  const language = settingsStore.getState().language || 'en'
-  const [pendingExternalAction, setPendingExternalAction] = useState(false)
-  const pendingExternalActionRef = useRef(false)
-
-  const handleClaimFreePlan = useCallback(async () => {
-    if (pendingExternalActionRef.current) return
-
-    pendingExternalActionRef.current = true
-    setPendingExternalAction(true)
+export function FreeTrialLink({ onAfterClick: _onAfterClick }: FreeTrialLinkProps = {}) {
+  const handleOpenSettings = useCallback(() => {
     trackJkClickEvent(JK_EVENTS.FREE_LICENSE_CLAIM_CLICK, {
       pageName: JK_PAGE_NAMES.HELP_PAGE,
-      content: 'onboarding_guide',
+      content: 'onboarding_group_key_setup',
     })
-    try {
-      await openLinkWithAuth(
-        buildChatboxUrl(
-          `/redirect_app/claim_free_plan/${language}/?utm_source=app&utm_content=guide_session_free_trial`
-        )
-      )
-      onAfterClick?.()
-    } finally {
-      pendingExternalActionRef.current = false
-      setPendingExternalAction(false)
-    }
-  }, [language, onAfterClick])
+    navigateToSettings('/provider')
+  }, [])
 
   return (
-    <Flex mt="md">
+    <Flex mt="md" style={guideActionButtonWidthStyle}>
       <Button
-        leftSection={<ScalableIcon icon={IconExternalLink} size={18} />}
-        onClick={() => void handleClaimFreePlan()}
+        leftSection={<ScalableIcon icon={IconKey} size={18} />}
+        onClick={handleOpenSettings}
         variant="light"
-        style={guideActionButtonWidthStyle}
+        fullWidth
         h={42}
-        loading={pendingExternalAction}
-        disabled={pendingExternalAction}
       >
-        {t('Claim Free Plan')}
+        选择分组并创建密钥
       </Button>
     </Flex>
   )
