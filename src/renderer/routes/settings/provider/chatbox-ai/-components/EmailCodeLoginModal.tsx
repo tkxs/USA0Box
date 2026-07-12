@@ -1,9 +1,10 @@
-import { Alert, Button, PasswordInput, Stack, Text, TextInput } from '@mantine/core'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Alert, Button, Code, Group, Loader, Paper, Stack, Text } from '@mantine/core'
+import { IconExternalLink } from '@tabler/icons-react'
+import { useCallback, useEffect } from 'react'
+import { ScalableIcon } from '@/components/common/ScalableIcon'
 import { Modal } from '@/components/layout/Overlay'
-import { TurnstileWidget, type TurnstileWidgetHandle } from '@/components/TurnstileWidget'
-import { useSub2APIPublicSettings, useSub2APISiteName } from '@/hooks/useSub2APISiteName'
-import { useLogin } from './useLogin'
+import { useSub2APISiteName } from '@/hooks/useSub2APISiteName'
+import { useDeviceLogin } from './useDeviceLogin'
 
 interface EmailCodeLoginModalProps {
   opened: boolean
@@ -13,35 +14,20 @@ interface EmailCodeLoginModalProps {
 }
 
 export function EmailCodeLoginModal({ opened, onClose, onLoginSuccess }: EmailCodeLoginModalProps) {
-  const login = useLogin({ onLoginSuccess })
+  const login = useDeviceLogin({ onLoginSuccess })
   const siteName = useSub2APISiteName()
-  const publicSettingsQuery = useSub2APIPublicSettings()
-  const [turnstileToken, setTurnstileToken] = useState('')
-  const turnstileRef = useRef<TurnstileWidgetHandle>(null)
-  const turnstileEnabled = Boolean(
-    publicSettingsQuery.data?.turnstile_enabled && publicSettingsQuery.data.turnstile_site_key
-  )
-  const submitting = login.loginState === 'submitting'
 
   const handleClose = useCallback(() => {
     login.reset()
-    setTurnstileToken('')
     onClose()
   }, [login, onClose])
 
-  const handleSubmit = useCallback(async () => {
-    const success = login.requiresTwoFactor ? await login.verifyTwoFactor() : await login.submit(turnstileToken)
-    if (success) handleClose()
-  }, [handleClose, login, turnstileToken])
-
-  const handleTurnstileExpire = useCallback(() => setTurnstileToken(''), [])
-  const handleTurnstileError = useCallback(() => setTurnstileToken(''), [])
-
   useEffect(() => {
-    if (login.loginState !== 'error') return
-    setTurnstileToken('')
-    turnstileRef.current?.reset()
-  }, [login.loginState])
+    if (login.loginState === 'success') handleClose()
+  }, [handleClose, login.loginState])
+
+  const waiting = login.loginState === 'waiting'
+  const starting = login.loginState === 'starting'
 
   return (
     <Modal
@@ -51,82 +37,57 @@ export function EmailCodeLoginModal({ opened, onClose, onLoginSuccess }: EmailCo
       size="md"
       title={siteName ? `登录 ${siteName}` : '登录'}
       closeOnClickOutside={false}
-      closeOnEscape={false}
     >
       <Stack gap="md">
         <Text size="sm" c="chatbox-secondary">
-          {login.requiresTwoFactor
-            ? `请输入 6 位身份验证器验证码${login.maskedEmail ? `（账号 ${login.maskedEmail}）` : ''}。`
-            : siteName
-              ? `请输入你在 ${siteName} 服务中使用的账号和密码。`
-              : '请输入服务账号和密码。'}
+          ZeroBox 将在浏览器中打开{siteName || '服务网站'}。请在网站完成登录和安全验证，然后确认授权此设备。
         </Text>
 
-        {!login.requiresTwoFactor ? (
-          <>
-            <TextInput
-              label="邮箱"
-              type="email"
-              placeholder="name@example.com"
-              autoComplete="email"
-              value={login.email}
-              onChange={(event) => login.setEmail(event.currentTarget.value)}
-              disabled={submitting}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && login.canSubmit) void handleSubmit()
-              }}
-            />
-            <PasswordInput
-              label="密码"
-              autoComplete="current-password"
-              value={login.password}
-              onChange={(event) => login.setPassword(event.currentTarget.value)}
-              disabled={submitting}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && login.canSubmit) void handleSubmit()
-              }}
-            />
-          </>
-        ) : (
-          <TextInput
-            label="身份验证器验证码"
-            value={login.totpCode}
-            onChange={(event) => login.setTotpCode(event.currentTarget.value.replace(/\D/g, '').slice(0, 6))}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={6}
-            disabled={submitting}
-          />
-        )}
-
-        {!login.requiresTwoFactor && turnstileEnabled && (
-          <TurnstileWidget
-            ref={turnstileRef}
-            siteKey={publicSettingsQuery.data?.turnstile_site_key || ''}
-            onVerify={setTurnstileToken}
-            onExpire={handleTurnstileExpire}
-            onError={handleTurnstileError}
-          />
+        {login.authorization && (
+          <Paper withBorder p="md">
+            <Stack gap="sm" align="center">
+              <Text size="sm" c="dimmed">
+                设备验证码
+              </Text>
+              <Code fz="xl" fw={700} p="sm">
+                {login.authorization.userCode}
+              </Code>
+              {waiting && (
+                <Group gap="xs">
+                  <Loader size="xs" />
+                  <Text size="sm">等待你在网站确认授权...</Text>
+                </Group>
+              )}
+            </Stack>
+          </Paper>
         )}
 
         {login.loginError && (
-          <Alert color="red" variant="light" title="登录失败">
+          <Alert color="red" variant="light" title="设备授权失败">
             {login.loginError}
           </Alert>
         )}
 
-        <Button
-          fullWidth
-          onClick={() => void handleSubmit()}
-          loading={submitting}
-          disabled={
-            login.requiresTwoFactor
-              ? !login.canVerifyTwoFactor
-              : !login.canSubmit || (turnstileEnabled && !turnstileToken)
-          }
-        >
-          {login.requiresTwoFactor ? '验证并登录' : '登录'}
-        </Button>
+        {waiting ? (
+          <Button
+            fullWidth
+            variant="light"
+            leftSection={<ScalableIcon icon={IconExternalLink} size={16} />}
+            onClick={() => void login.openVerificationPage()}
+          >
+            重新打开授权页面
+          </Button>
+        ) : (
+          <Button
+            fullWidth
+            loading={starting}
+            disabled={starting}
+            leftSection={!starting && <ScalableIcon icon={IconExternalLink} size={16} />}
+            onClick={() => void login.start()}
+          >
+            打开{siteName ? ` ${siteName}` : '网站'}登录
+          </Button>
+        )}
       </Stack>
     </Modal>
   )

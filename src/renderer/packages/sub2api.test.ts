@@ -7,7 +7,8 @@ import {
   getSub2APIKeys,
   getSub2APIModels,
   getSub2APISiteName,
-  loginToSub2API,
+  pollSub2APIDeviceAuthorization,
+  startSub2APIDeviceAuthorization,
 } from './sub2api'
 
 function jsonResponse(data: unknown, status = 200) {
@@ -23,37 +24,71 @@ describe('SUB2API client', () => {
     vi.restoreAllMocks()
   })
 
-  it('logs in with email and password and maps the token pair', async () => {
+  it('starts a device authorization and maps its browser verification details', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       jsonResponse({
         success: true,
         data: {
-          access_token: 'access-1',
-          refresh_token: 'refresh-1',
-          token_type: 'Bearer',
-          user: { id: 1, email: 'admin@example.com', role: 'admin' },
+          device_code: 'private-device-code',
+          user_code: 'ABCD-EFGH',
+          verification_uri: 'https://usa0.top/device',
+          verification_uri_complete: 'https://usa0.top/device?code=ABCD-EFGH',
+          expires_in: 600,
+          interval: 3,
         },
       })
     )
     vi.stubGlobal('fetch', fetchMock)
 
-    await expect(loginToSub2API('admin@example.com', 'password', 'turnstile-token')).resolves.toMatchObject({
+    await expect(startSub2APIDeviceAuthorization()).resolves.toEqual({
+      deviceCode: 'private-device-code',
+      userCode: 'ABCD-EFGH',
+      verificationUri: 'https://usa0.top/device',
+      verificationUriComplete: 'https://usa0.top/device?code=ABCD-EFGH',
+      expiresIn: 600,
+      interval: 3,
+    })
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://usa0.top/api/v1/auth/device/start',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ client_name: 'ZeroBox' }),
+      })
+    )
+  })
+
+  it('keeps polling while the device authorization is pending', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(jsonResponse({ success: true, data: { status: 'authorization_pending' } }, 202))
+    )
+
+    await expect(pollSub2APIDeviceAuthorization('private-device-code')).resolves.toEqual({ type: 'pending' })
+  })
+
+  it('maps an approved device authorization to the existing token pair', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        jsonResponse({
+          success: true,
+          data: {
+            status: 'approved',
+            access_token: 'access-1',
+            refresh_token: 'refresh-1',
+            token_type: 'Bearer',
+            user: { id: 1, email: 'admin@example.com', role: 'admin' },
+          },
+        })
+      )
+    )
+
+    await expect(pollSub2APIDeviceAuthorization('private-device-code')).resolves.toMatchObject({
       type: 'authenticated',
       accessToken: 'access-1',
       refreshToken: 'refresh-1',
       user: { email: 'admin@example.com' },
     })
-    expect(fetchMock).toHaveBeenCalledWith(
-      'https://usa0.top/api/v1/auth/login',
-      expect.objectContaining({
-        method: 'POST',
-        body: JSON.stringify({
-          email: 'admin@example.com',
-          password: 'password',
-          turnstile_token: 'turnstile-token',
-        }),
-      })
-    )
   })
 
   it('loads the configured site name from public settings', async () => {

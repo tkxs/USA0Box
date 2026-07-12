@@ -63,15 +63,27 @@ export interface Sub2APIAccountConfig {
   subscriptions: Sub2APISubscription[]
 }
 
-export type Sub2APILoginResult =
+export interface Sub2APIDeviceAuthorization {
+  deviceCode: string
+  userCode: string
+  verificationUri: string
+  verificationUriComplete: string
+  expiresIn: number
+  interval: number
+}
+
+export type Sub2APIDeviceTokenResult =
+  | { type: 'pending' }
+  | { type: 'slow-down' }
+  | { type: 'denied' }
+  | { type: 'expired' }
   | { type: 'authenticated'; accessToken: string; refreshToken: string; user: Sub2APIUser }
-  | { type: 'two-factor'; tempToken: string; userEmailMasked?: string }
 
 interface ApiEnvelope<T> {
   success: boolean
   data: T
   message?: string
-  error?: { message?: string; detail?: string }
+  error?: { code?: string; message?: string; detail?: string }
 }
 
 interface TokenResponse {
@@ -82,10 +94,17 @@ interface TokenResponse {
   user: Sub2APIUser
 }
 
-interface TwoFactorResponse {
-  requires_2fa: true
-  temp_token: string
-  user_email_masked?: string
+interface DeviceAuthorizationResponse {
+  device_code: string
+  user_code: string
+  verification_uri: string
+  verification_uri_complete?: string
+  expires_in: number
+  interval?: number
+}
+
+interface DeviceTokenResponse extends Partial<TokenResponse> {
+  status?: 'authorization_pending' | 'slow_down' | 'access_denied' | 'expired_token' | 'approved'
 }
 
 interface PaginatedResponse<T> {
@@ -97,10 +116,6 @@ export interface Sub2APIPublicSettings {
   site_name?: string
   turnstile_enabled?: boolean
   turnstile_site_key?: string
-}
-
-function isTwoFactorResponse(result: TokenResponse | TwoFactorResponse): result is TwoFactorResponse {
-  return 'requires_2fa' in result && result.requires_2fa === true
 }
 
 function normalizeBaseUrl(value: string | undefined, fallback: string) {
@@ -229,35 +244,73 @@ async function authenticatedRequest<T>(path: string, init?: RequestInit, canRetr
   return parseResponse<T>(response)
 }
 
-export async function loginToSub2API(
-  email: string,
-  password: string,
-  turnstileToken?: string
-): Promise<Sub2APILoginResult> {
-  const result = await publicRequest<TokenResponse | TwoFactorResponse>('/auth/login', {
+export async function startSub2APIDeviceAuthorization(signal?: AbortSignal): Promise<Sub2APIDeviceAuthorization> {
+  const result = await publicRequest<DeviceAuthorizationResponse>('/auth/device/start', {
     method: 'POST',
-    body: JSON.stringify({ email, password, turnstile_token: turnstileToken || undefined }),
+    body: JSON.stringify({ client_name: 'ZeroBox' }),
+    signal,
   })
 
-  if (isTwoFactorResponse(result)) {
-    return { type: 'two-factor', tempToken: result.temp_token, userEmailMasked: result.user_email_masked }
+  return {
+    deviceCode: result.device_code,
+    userCode: result.user_code,
+    verificationUri: result.verification_uri,
+    verificationUriComplete: result.verification_uri_complete || result.verification_uri,
+    expiresIn: result.expires_in,
+    interval: Math.max(result.interval || 3, 1),
   }
-  if (!result.refresh_token) throw new Error('服务未返回刷新令牌')
+}
+
+function deviceStatusFromCode(code?: string): Sub2APIDeviceTokenResult | undefined {
+  switch (code) {
+    case 'authorization_pending':
+      return { type: 'pending' }
+    case 'slow_down':
+      return { type: 'slow-down' }
+    case 'access_denied':
+      return { type: 'denied' }
+    case 'expired_token':
+      return { type: 'expired' }
+    default:
+      return undefined
+  }
+}
+
+export async function pollSub2APIDeviceAuthorization(
+  deviceCode: string,
+  signal?: AbortSignal
+): Promise<Sub2APIDeviceTokenResult> {
+  const response = await fetchCrossPlatform(`${getSub2APIApiBaseUrl()}/auth/device/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ device_code: deviceCode }),
+    signal,
+  })
+
+  let envelope: ApiEnvelope<DeviceTokenResponse> | undefined
+  try {
+    envelope = (await response.json()) as ApiEnvelope<DeviceTokenResponse>
+  } catch {
+    throw new Error(`设备授权请求失败（${response.status}）`)
+  }
+
+  const statusResult = deviceStatusFromCode(envelope.data?.status || envelope.error?.code)
+  if (statusResult) return statusResult
+
+  if (!response.ok || envelope.success === false) {
+    throw new Error(envelope.error?.detail || envelope.error?.message || envelope.message || '设备授权请求失败')
+  }
+
+  const result = envelope.data
+  if (!result?.access_token || !result.refresh_token || !result.user) {
+    throw new Error('设备授权服务未返回完整的登录令牌')
+  }
   return {
     type: 'authenticated',
     accessToken: result.access_token,
     refreshToken: result.refresh_token,
     user: result.user,
   }
-}
-
-export async function completeSub2APITwoFactorLogin(tempToken: string, totpCode: string) {
-  const result = await publicRequest<TokenResponse>('/auth/login/2fa', {
-    method: 'POST',
-    body: JSON.stringify({ temp_token: tempToken, totp_code: totpCode }),
-  })
-  if (!result.refresh_token) throw new Error('服务未返回刷新令牌')
-  return { accessToken: result.access_token, refreshToken: result.refresh_token, user: result.user }
 }
 
 export async function logoutFromSub2API() {
