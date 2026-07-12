@@ -115,14 +115,20 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
+      - name: Verify Android release signing
+        shell: bash
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEY_PASSWORD" ]; then
+            echo "Android release signing secrets are required for an installable update package."
+            exit 1
+          fi
+
       - name: Restore Android signing key
-        if: env.ANDROID_KEYSTORE_BASE64 != '' && env.ANDROID_KEYSTORE_PASSWORD != '' && env.ANDROID_KEY_ALIAS != '' && env.ANDROID_KEY_PASSWORD != ''
         run: |
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/sub0box-release.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/sub0box-release.jks" >> "$GITHUB_ENV"
 
       - name: Build signed APK and AAB
-        if: env.ANDROID_KEYSTORE_PATH != ''
         working-directory: android
         run: ./gradlew assembleRelease bundleRelease
 
@@ -131,13 +137,10 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           mkdir -p mobile-artifacts
-          cp android/app/build/outputs/apk/debug/app-debug.apk "mobile-artifacts/ZeroBox-${VERSION}-android-debug.apk"
-          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
-            cp android/app/build/outputs/apk/release/app-release.apk "mobile-artifacts/ZeroBox-${VERSION}-android.apk"
-          fi
-          if [ -f android/app/build/outputs/bundle/release/app-release.aab ]; then
-            cp android/app/build/outputs/bundle/release/app-release.aab "mobile-artifacts/ZeroBox-${VERSION}-android.aab"
-          fi
+          cp android/app/build/outputs/apk/debug/app-debug.apk "mobile-artifacts/ZeroBox-${VERSION}-android-test.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "mobile-artifacts/ZeroBox-${VERSION}-android.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "mobile-artifacts/ZeroBox-android-update.apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "mobile-artifacts/ZeroBox-${VERSION}-android.aab"
 
       - name: Upload Android artifacts
         uses: actions/upload-artifact@v4

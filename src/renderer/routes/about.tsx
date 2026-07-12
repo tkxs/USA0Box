@@ -36,7 +36,8 @@ import useVersion from '@/hooks/useVersion'
 import platform from '@/platform'
 import iconPNG from '@/static/icon.png'
 import IMG_WECHAT_QRCODE from '@/static/wechat_qrcode.png'
-import { installUpdate, useUpdateStore } from '@/stores/updateStore'
+import { installUpdate, requestMobileUpdateInstall, useUpdateStore } from '@/stores/updateStore'
+import { CHATBOX_BUILD_PLATFORM } from '@/variables'
 
 export const Route = createFileRoute('/about')({
   component: RouteComponent,
@@ -59,7 +60,7 @@ function RouteComponent() {
                   ZeroBox {/\d/.test(version.version) ? `(v${version.version})` : ''}
                 </Title>
 
-                <UpdateSection needCheckUpdate={version.needCheckUpdate} />
+                <UpdateSection needCheckUpdate={version.needCheckUpdate} latestVersion={version.latestVersion} />
               </Flex>
               <Text>{t('about-slogan')}</Text>
               <Text c="chatbox-tertiary">{t('about-introduction')}</Text>
@@ -153,7 +154,7 @@ function RouteComponent() {
  * Desktop: check button, progress bar, error/retry, restart & install.
  * Mobile: "New version available" hint linking to GitHub Releases.
  */
-function UpdateSection({ needCheckUpdate }: { needCheckUpdate: boolean }) {
+function UpdateSection({ needCheckUpdate, latestVersion }: { needCheckUpdate: boolean; latestVersion: string }) {
   const isDesktop = platform.type === 'desktop'
 
   if (isDesktop) {
@@ -161,11 +162,26 @@ function UpdateSection({ needCheckUpdate }: { needCheckUpdate: boolean }) {
   }
 
   // Mobile and Web both use external link
-  return <MobileUpdateHint needCheckUpdate={needCheckUpdate} />
+  return <MobileUpdateHint needCheckUpdate={needCheckUpdate} latestVersion={latestVersion} />
 }
 
-function MobileUpdateHint({ needCheckUpdate }: { needCheckUpdate: boolean }) {
+function MobileUpdateHint({ needCheckUpdate, latestVersion }: { needCheckUpdate: boolean; latestVersion: string }) {
   const { t } = useTranslation()
+  const status = useUpdateStore((state) => state.status)
+  const progress = useUpdateStore((state) => state.progress)
+  const isAndroid = platform.type === 'mobile' && CHATBOX_BUILD_PLATFORM === 'android'
+
+  const handleClick = () => {
+    if (isAndroid && needCheckUpdate && latestVersion) {
+      void requestMobileUpdateInstall(latestVersion)
+      return
+    }
+    if (isAndroid) {
+      useUpdateStore.setState({ status: 'up-to-date', error: null })
+      return
+    }
+    void platform.openLink('https://github.com/tkxs/USA0Box/releases/latest')
+  }
 
   if (needCheckUpdate) {
     return (
@@ -175,21 +191,16 @@ function MobileUpdateHint({ needCheckUpdate }: { needCheckUpdate: boolean }) {
         color="chatbox-brand"
         radius="xl"
         className="flex-shrink-0"
-        onClick={() => platform.openLink('https://github.com/tkxs/USA0Box/releases/latest')}
+        loading={isAndroid && status === 'downloading'}
+        onClick={handleClick}
       >
-        {t('New version available')}
+        {isAndroid && status === 'downloading' ? `${t('Downloading...')} ${progress}%` : t('New version available')}
       </Button>
     )
   }
 
   return (
-    <Button
-      size="xs"
-      variant="default"
-      radius="xl"
-      className="flex-shrink-0"
-      onClick={() => platform.openLink('https://github.com/tkxs/USA0Box/releases/latest')}
-    >
+    <Button size="xs" variant="default" radius="xl" className="flex-shrink-0" onClick={handleClick}>
       {t('Check Update')}
     </Button>
   )

@@ -42,6 +42,7 @@ export interface Platform extends Storage {
   onUpdaterDownloaded?(callback: (data: { version: string }) => void): () => void
   onUpdaterError?(callback: (data: { message: string }) => void): () => void
   checkForUpdate?(): Promise<{ started: boolean }>
+  installMobileUpdate?(version: string, onProgress: (percent: number) => void): Promise<{ permissionRequired: boolean }>
   onNavigate?(callback: (path: string) => void): () => void
   onSub2APIOAuthCallback(callback: (url: string) => void): () => void
   openLink(url: string): Promise<void>

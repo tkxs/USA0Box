@@ -5,7 +5,8 @@ import Markdown from '@/components/Markdown'
 import type useVersion from '@/hooks/useVersion'
 import * as remote from '@/packages/remote'
 import platform from '@/platform'
-import { requestUpdateInstall, useUpdateStore } from '@/stores/updateStore'
+import { requestMobileUpdateInstall, requestUpdateInstall, useUpdateStore } from '@/stores/updateStore'
+import { CHATBOX_BUILD_PLATFORM } from '@/variables'
 
 const RELEASE_URL = 'https://github.com/tkxs/USA0Box/releases/latest'
 const DISMISSED_KEY_PREFIX = 'sub0box:update-announcement-dismissed:'
@@ -49,20 +50,33 @@ export default function UpdateAnnouncementModal({ latestVersion, needCheckUpdate
       await requestUpdateInstall()
       return
     }
+    if (platform.type === 'mobile' && CHATBOX_BUILD_PLATFORM === 'android') {
+      await requestMobileUpdateInstall(version)
+      return
+    }
     await platform.openLink(RELEASE_URL)
   }
 
-  const waitingForInstall = installOnDownload && status !== 'error'
+  const mobileDownloading = platform.type === 'mobile' && status === 'downloading'
+  const waitingForInstall = (installOnDownload && status !== 'error') || mobileDownloading
   const buttonLabel =
-    platform.type !== 'desktop'
-      ? '前往下载'
-      : status === 'downloaded'
-        ? '重启并安装'
-        : installOnDownload
-          ? '下载完成后自动安装'
+    platform.type === 'mobile' && CHATBOX_BUILD_PLATFORM === 'android'
+      ? status === 'downloaded'
+        ? '重新打开安装程序'
+        : status === 'available' && progress === 100
+          ? '继续安装'
           : status === 'error'
             ? '重试更新'
-            : '立即更新'
+            : '下载并安装'
+      : platform.type !== 'desktop'
+        ? '前往下载'
+        : status === 'downloaded'
+          ? '重启并安装'
+          : installOnDownload
+            ? '下载完成后自动安装'
+            : status === 'error'
+              ? '重试更新'
+              : '立即更新'
 
   return (
     <Modal opened={opened} onClose={dismiss} title={`发现新版本 ZeroBox ${version}`} centered size="lg">
@@ -82,7 +96,7 @@ export default function UpdateAnnouncementModal({ latestVersion, needCheckUpdate
           )}
         </ScrollArea.Autosize>
 
-        {platform.type === 'desktop' && status === 'downloading' && (
+        {(platform.type === 'desktop' || CHATBOX_BUILD_PLATFORM === 'android') && status === 'downloading' && (
           <Stack gap={4}>
             <Group justify="space-between">
               <Text size="sm">正在下载安装包</Text>
@@ -94,9 +108,13 @@ export default function UpdateAnnouncementModal({ latestVersion, needCheckUpdate
           </Stack>
         )}
 
-        {platform.type === 'desktop' && status === 'error' && (
-          <Alert icon={<IconAlertCircle size={18} />} color="red" title="自动更新失败">
-            {error || '请检查网络后重试，或前往 GitHub Releases 手动下载。'}
+        {error && (
+          <Alert
+            icon={<IconAlertCircle size={18} />}
+            color={status === 'error' ? 'red' : 'orange'}
+            title={status === 'error' ? '自动更新失败' : '需要安装权限'}
+          >
+            {error}
           </Alert>
         )}
 

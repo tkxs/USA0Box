@@ -65,6 +65,41 @@ export async function requestUpdateInstall() {
   }
 }
 
+export async function requestMobileUpdateInstall(version: string) {
+  if (!platform.installMobileUpdate) {
+    useUpdateStore.setState({ status: 'error', error: '当前平台不支持应用内更新' })
+    return
+  }
+
+  useUpdateStore.setState({
+    status: 'downloading',
+    version,
+    progress: 0,
+    error: null,
+    installOnDownload: false,
+  })
+  try {
+    const result = await platform.installMobileUpdate(version, (progress) => {
+      useUpdateStore.setState({ status: 'downloading', progress })
+    })
+    if (result.permissionRequired) {
+      useUpdateStore.setState({
+        status: 'available',
+        progress: 100,
+        error: '安装包已下载。请在系统设置中允许 ZeroBox 安装未知应用，然后返回并再次点击安装。',
+      })
+      return
+    }
+    useUpdateStore.setState({ status: 'downloaded', progress: 100, error: null })
+  } catch (error) {
+    useUpdateStore.setState({
+      status: 'error',
+      progress: 0,
+      error: error instanceof Error ? error.message : '移动端更新失败',
+    })
+  }
+}
+
 let initialized = false
 
 /**

@@ -13,6 +13,7 @@ import { SQLiteSessionMetaStorage } from '@/storage/SQLiteSessionMetaStorage'
 import { IndexedDBTaskSessionStorage, type TaskSessionStorage } from '@/storage/TaskSessionStorage'
 import { CHATBOX_BUILD_PLATFORM } from '@/variables'
 import { getBrowser, getOS } from '../packages/navigator'
+import { downloadAndInstallAndroidUpdate } from '../packages/mobile-update'
 import type { Platform, PlatformType } from './interfaces'
 import type { KnowledgeBaseController } from './knowledge-base/interface'
 import MobileExporter from './mobile_exporter'
@@ -29,6 +30,7 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
   private navigationCallback: ((path: string) => void) | null = null
   private sub2APIOAuthCallback: ((url: string) => void) | null = null
   private pendingSub2APIOAuthCallback: string | null = null
+  private downloadedUpdateFileName: string | null = null
   private _imageGenerationStorage: ImageGenerationStorage | null = null
   private _taskSessionStorage: TaskSessionStorage | null = null
   private _sessionMetaStorage: SessionMetaStorage | null = null
@@ -172,6 +174,18 @@ export default class MobilePlatform extends MobileSQLiteStorage implements Platf
       // 降级方案：使用 window.open（但在异步调用后可能被阻止）
       window.open(url)
     }
+  }
+  public async installMobileUpdate(version: string, onProgress: (percent: number) => void) {
+    if ((await this.getPlatform()) !== 'android') {
+      throw new Error('当前平台不支持应用内安装，请使用 App Store 或 TestFlight 更新')
+    }
+    const result = await downloadAndInstallAndroidUpdate(
+      version,
+      onProgress,
+      this.downloadedUpdateFileName || undefined
+    )
+    this.downloadedUpdateFileName = result.fileName
+    return { permissionRequired: result.permissionRequired }
   }
   public async getDeviceName(): Promise<string> {
     try {

@@ -9,10 +9,12 @@ ZeroBox 是 public client，不配置也不接受 `client_secret`。
 | client_id | 平台 | 允许的 redirect_uri |
 | --- | --- | --- |
 | `zerobox-desktop` | Windows/macOS/Linux | `http://127.0.0.1:{动态端口}/oauth/callback` |
-| `zerobox-android` | Android | `https://usa0.top/app/zerobox/callback` |
-| `zerobox-ios` | iOS | `https://usa0.top/app/zerobox/callback` |
+| `zerobox-android` | Android | `zerobox://oauth/callback`；兼容 `https://usa0.top/app/zerobox/callback` |
+| `zerobox-ios` | iOS | `zerobox://oauth/callback`；兼容 `https://usa0.top/app/zerobox/callback` |
 
 桌面回调只允许字面量 `127.0.0.1`、合法端口和精确路径。拒绝 `localhost`、IPv6、`0.0.0.0`、userinfo、fragment、额外路径和任意域名。
+
+移动端当前使用已注册的私有 URI Scheme 直接返回 ZeroBox，避免未完成正式签名或域名关联时回调停留在浏览器。服务端必须按 client 精确匹配 `zerobox://oauth/callback`，且仍需强制 S256 PKCE、一次性授权码和 `state` 校验。HTTPS App Link/Universal Link 保留为完成正式签名与域名关联后的升级路径。
 
 允许的 scope：
 
@@ -176,6 +178,8 @@ SUB2API 目前会轮换 Refresh Token，但旧 token 删除后无法定位原 to
 - 设备撤销后 Refresh Token 立即失效，Access Token 通过撤销缓存即时失效或最多存活 5-10 分钟。
 
 ## 移动端域名文件
+
+以下域名文件不再阻塞当前的私有 URI Scheme 登录，但启用 HTTPS App Link/Universal Link 前仍必须正确部署。
 
 Android 在 `https://usa0.top/.well-known/assetlinks.json` 发布正式签名证书 SHA-256：
 

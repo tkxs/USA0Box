@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { buildSub2APIAuthorizeUrl, createSub2APIOAuthTransaction, parseSub2APIOAuthCallback } from './sub2api-oauth'
+import {
+  buildSub2APIAuthorizeUrl,
+  createSub2APIOAuthTransaction,
+  parseSub2APIOAuthCallback,
+  SUB2API_MOBILE_REDIRECT_URI,
+} from './sub2api-oauth'
 
 describe('SUB2API OAuth client', () => {
   beforeEach(() => {
@@ -9,7 +14,7 @@ describe('SUB2API OAuth client', () => {
   it('creates an S256 PKCE transaction and authorization URL', async () => {
     const { transaction, codeChallenge } = await createSub2APIOAuthTransaction({
       clientId: 'zerobox-android',
-      redirectUri: 'https://usa0.top/app/zerobox/callback',
+      redirectUri: SUB2API_MOBILE_REDIRECT_URI,
     })
     const url = new URL(
       buildSub2APIAuthorizeUrl({ transaction, codeChallenge, deviceName: 'Pixel', platform: 'android' })
@@ -21,6 +26,7 @@ describe('SUB2API OAuth client', () => {
     expect(url.searchParams.get('code_challenge_method')).toBe('S256')
     expect(url.searchParams.get('code_challenge')).toBe(codeChallenge)
     expect(url.searchParams.get('state')).toBe(transaction.state)
+    expect(url.searchParams.get('redirect_uri')).toBe('zerobox://oauth/callback')
   })
 
   it('accepts only the claimed HTTPS callback and explicit fallback scheme', () => {

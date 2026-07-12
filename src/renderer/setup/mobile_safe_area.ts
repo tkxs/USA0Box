@@ -3,37 +3,35 @@
 // 通过这些变量，可以在css中设置安全区域的padding，margin等，来规避异形屏的显示问题
 // 为了达到最好的效果，在 html 的 meta 标签中设置 viewport-fit=cover
 
-import { SafeArea } from 'capacitor-plugin-safe-area'
 import { Keyboard } from '@capacitor/keyboard'
+import { SafeArea } from 'capacitor-plugin-safe-area'
 
-SafeArea.getSafeAreaInsets().then(({ insets }) => {
+let statusBarHeight = 0
+
+function applyInsets(insets: { top: number; right: number; bottom: number; left: number }) {
   for (const [key, value] of Object.entries(insets)) {
-    document.documentElement.style.setProperty(`--mobile-safe-area-inset-${key}`, `${value}px`)
+    const resolvedValue = key === 'top' ? Math.max(value, statusBarHeight) : value
+    document.documentElement.style.setProperty(`--mobile-safe-area-inset-${key}`, `${resolvedValue}px`)
   }
-})
+}
 
-SafeArea.getStatusBarHeight().then(({ statusBarHeight }) => {
-  // console.log(statusBarHeight, 'statusbarHeight');
-})
-;(async () => {
-  // when safe-area changed
-  const eventListener = await SafeArea.addListener('safeAreaChanged', (data) => {
-    const { insets } = data
-    for (const [key, value] of Object.entries(insets)) {
-      document.documentElement.style.setProperty(`--mobile-safe-area-inset-${key}`, `${value}px`)
-    }
+void Promise.all([SafeArea.getSafeAreaInsets(), SafeArea.getStatusBarHeight()])
+  .then(([{ insets }, statusBar]) => {
+    statusBarHeight = statusBar.statusBarHeight
+    applyInsets(insets)
   })
-  // eventListener.remove();
-})()
+  .catch((error) => console.error('Failed to read mobile safe area:', error))
 
-Keyboard.addListener('keyboardWillShow', async (info) => {
+void SafeArea.addListener('safeAreaChanged', (data) => {
+  applyInsets(data.insets)
+})
+
+void Keyboard.addListener('keyboardWillShow', () => {
   document.documentElement.style.setProperty(`--mobile-safe-area-inset-bottom`, `0px`)
 })
 
-Keyboard.addListener('keyboardWillHide', () => {
-  SafeArea.getSafeAreaInsets().then(({ insets }) => {
-    for (const [key, value] of Object.entries(insets)) {
-      document.documentElement.style.setProperty(`--mobile-safe-area-inset-${key}`, `${value}px`)
-    }
+void Keyboard.addListener('keyboardWillHide', () => {
+  void SafeArea.getSafeAreaInsets().then(({ insets }) => {
+    applyInsets(insets)
   })
 })

@@ -1,5 +1,5 @@
 const SUB2API_AUTHORIZE_URL = 'https://usa0.top/oauth/authorize'
-export const SUB2API_MOBILE_REDIRECT_URI = 'https://usa0.top/app/zerobox/callback'
+export const SUB2API_MOBILE_REDIRECT_URI = 'zerobox://oauth/callback'
 export const SUB2API_OAUTH_SCOPE =
   'openid profile:read groups:read keys:read keys:write subscriptions:read offline_access'
 
