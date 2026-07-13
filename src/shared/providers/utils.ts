@@ -7,14 +7,21 @@ import CustomOpenAI from './definitions/models/custom-openai'
 import CustomOpenAIResponses from './definitions/models/custom-openai-responses'
 import type { CreateModelConfig } from './types'
 
+export function usesOpenAIResponsesTransport(model: { modelId: string; apiStyle?: string }): boolean {
+  const normalized = model.modelId.toLowerCase().replace(/^models\//, '')
+  return model.apiStyle === 'openai-responses' || normalized.startsWith('gpt-5') || normalized.includes('codex')
+}
+
 export function createCustomProviderModel(
   config: CreateModelConfig,
   customProviderType: ModelProviderType | undefined,
   dependencies: ModelDependencies
 ): ModelInterface {
   const { settings, providerSetting, formattedApiHost, formattedApiPath, model } = config
+  const useResponsesTransport = usesOpenAIResponsesTransport(model)
+  const effectiveProviderType = useResponsesTransport ? ModelProviderType.OpenAIResponses : customProviderType
 
-  switch (customProviderType) {
+  switch (effectiveProviderType) {
     case ModelProviderType.Claude:
       return new CustomClaude(
         {
@@ -46,7 +53,7 @@ export function createCustomProviderModel(
         {
           apiKey: config.effectiveApiKey,
           apiHost: formattedApiHost,
-          apiPath: formattedApiPath,
+          apiPath: useResponsesTransport ? '/responses' : formattedApiPath,
           model,
           temperature: settings.temperature,
           topP: settings.topP,
@@ -56,7 +63,6 @@ export function createCustomProviderModel(
         },
         dependencies
       )
-    case ModelProviderType.OpenAI:
     default:
       return new CustomOpenAI(
         {

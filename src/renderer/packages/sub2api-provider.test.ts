@@ -1,5 +1,7 @@
+import { usesOpenAIResponsesTransport } from '@shared/providers/utils'
 import { ModelProviderType } from '@shared/types'
 import { describe, expect, it } from 'vitest'
+import { inferSub2APIModelApiStyle } from './sub2api'
 import {
   getCompatibleSub2APIPlatforms,
   getSub2APIGroupIdFromProviderId,
@@ -38,5 +40,13 @@ describe('SUB2API provider mapping', () => {
     expect(getSub2APIGroupProviderType('anthropic')).toBe(ModelProviderType.Claude)
     expect(getSub2APIGroupProviderType('gemini')).toBe(ModelProviderType.Gemini)
     expect(getSub2APIGroupProviderType('grok')).toBe(ModelProviderType.OpenAI)
+  })
+
+  it('routes GPT-5 and Codex models through the Responses API', () => {
+    expect(inferSub2APIModelApiStyle('gpt-5.6')).toBe('openai-responses')
+    expect(inferSub2APIModelApiStyle('gpt-5.3-codex')).toBe('openai-responses')
+    expect(inferSub2APIModelApiStyle('gpt-4o')).toBeUndefined()
+    expect(usesOpenAIResponsesTransport({ modelId: 'gpt-5.6' })).toBe(true)
+    expect(usesOpenAIResponsesTransport({ modelId: 'gpt-4o' })).toBe(false)
   })
 })

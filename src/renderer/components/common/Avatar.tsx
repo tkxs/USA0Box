@@ -2,9 +2,9 @@ import { Avatar, type AvatarProps, type PolymorphicComponentProps } from '@manti
 import { IconMessageCircle, IconPhoto, IconSettingsFilled, IconUser } from '@tabler/icons-react'
 import clsx from 'clsx'
 import type { FC } from 'react'
+import appLogo from '@/static/icon.png'
 import { useSettingsStore } from '@/stores/settingsStore'
 import { ImageInStorage } from '../Image'
-import Robot from '../icons/Robot'
 import { ScalableIcon } from './ScalableIcon'
 
 export type SystemAvatarProps = {
@@ -97,11 +97,9 @@ export const AssistantAvatar: FC<AssistantAvatarProps> = ({
       bg={
         avatarKey || picUrl || defaultAssistantAvatarKey
           ? undefined
-          : type === 'chat'
-            ? undefined
-            : sessionType === 'picture'
-              ? 'violet'
-              : 'chatbox-brand'
+          : sessionType === 'picture' && type !== 'chat'
+            ? 'violet'
+            : undefined
       }
       color={type === 'chat' ? 'chatbox-primary' : 'white'}
       {...avatarProps}
@@ -120,7 +118,7 @@ export const AssistantAvatar: FC<AssistantAvatarProps> = ({
         ) : type === 'chat' ? (
           <ScalableIcon icon={IconMessageCircle} size={realSize} className="!text-inherit" strokeWidth={1.5} />
         ) : (
-          <ScalableIcon icon={Robot} size={iconSize} className="!text-white" strokeWidth={1.5} />
+          <img src={appLogo} alt="" className="h-full w-full object-cover" />
         )
       ) : null}
     </Avatar>

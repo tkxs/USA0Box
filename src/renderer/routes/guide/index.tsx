@@ -56,6 +56,7 @@ function GuidePage() {
   const viewportRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [pendingLanguage, setPendingLanguage] = useState<Language | null>(null)
+  const allowSettingsNavigationRef = useRef(false)
 
   const {
     messages,
@@ -165,8 +166,16 @@ function GuidePage() {
 
   // Block navigation if guide is in progress, user hasn't completed config, and guide not completed
   const { proceed, reset, status } = useBlocker({
-    condition: isGuideInProgress && !hasValidConfig && onboardingStep !== 'completed',
+    condition: () =>
+      isGuideInProgress && !hasValidConfig && onboardingStep !== 'completed' && !allowSettingsNavigationRef.current,
   })
+
+  const allowGroupKeySettingsNavigation = useCallback(() => {
+    allowSettingsNavigationRef.current = true
+    queueMicrotask(() => {
+      allowSettingsNavigationRef.current = false
+    })
+  }, [])
 
   // Handle send message
   const handleSend = useCallback(() => {
@@ -313,6 +322,7 @@ function GuidePage() {
               onQuestionClick={sendMessage}
               onClaimStart={onClaimStart}
               onClaimDetected={onClaimDetected}
+              onOpenGroupKeySettings={allowGroupKeySettingsNavigation}
               isLastMessage={index === messages.length - 1}
             />
           ))}

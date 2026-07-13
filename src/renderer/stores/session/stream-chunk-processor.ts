@@ -37,6 +37,15 @@ export function finalizeReasoningDuration(part: MessageReasoningPart | undefined
   }
 }
 
+export function hasModelResponseContent(contentParts: MessageContentParts): boolean {
+  return contentParts.some((part) => {
+    if (part.type === 'text' || part.type === 'reasoning') {
+      return part.text.trim().length > 0
+    }
+    return part.type === 'tool-call' || part.type === 'image'
+  })
+}
+
 export async function processStreamChunk(
   chunk: ModelStreamPart<ToolSet>,
   state: StreamProcessorState,

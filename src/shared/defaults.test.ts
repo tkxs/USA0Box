@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { chatSessionSettings, getDefaultPrompt, newConfigs, pictureSessionSettings, settings } from './defaults'
-import { ModelProviderEnum, Theme, type Settings, type SessionSettings } from './types'
+import { ModelProviderEnum, type SessionSettings, type Settings, Theme } from './types'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
@@ -59,11 +59,12 @@ describe('defaults', () => {
     expect(getDefaultPrompt()).toBe('You are a helpful assistant.')
   })
 
-  it('chatSessionSettings() returns provider and modelId', () => {
+  it('chatSessionSettings() waits for the user to select a configured group model', () => {
     const result: SessionSettings = chatSessionSettings()
 
-    expect(result.provider).toBe(ModelProviderEnum.ChatboxAI)
-    expect(result.modelId).toBe('chatboxai-4')
+    expect(result.provider).toBeUndefined()
+    expect(result.modelId).toBeUndefined()
+    expect(result.maxContextMessageCount).toBe(Number.MAX_SAFE_INTEGER)
   })
 
   it('pictureSessionSettings() returns provider, modelId, dalleStyle, imageGenerateNum', () => {

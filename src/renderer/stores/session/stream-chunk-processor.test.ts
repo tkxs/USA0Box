@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   createInitialState,
   finalizeReasoningDuration,
+  hasModelResponseContent,
   processStreamChunk,
   type StreamProcessorCallbacks,
 } from './stream-chunk-processor'
@@ -54,6 +55,22 @@ describe('finalizeReasoningDuration', () => {
     const part = { type: 'reasoning' as const, text: 'thinking', startTime: Date.now() - 1000, duration: 500 }
     finalizeReasoningDuration(part)
     expect(part.duration).toBe(500)
+  })
+})
+
+describe('hasModelResponseContent', () => {
+  it('rejects an empty or whitespace-only response', () => {
+    expect(hasModelResponseContent([])).toBe(false)
+    expect(hasModelResponseContent([{ type: 'text', text: '   ' }])).toBe(false)
+  })
+
+  it('accepts text, reasoning, tool calls, and images', () => {
+    expect(hasModelResponseContent([{ type: 'text', text: 'answer' }])).toBe(true)
+    expect(hasModelResponseContent([{ type: 'reasoning', text: 'thinking' }])).toBe(true)
+    expect(
+      hasModelResponseContent([{ type: 'tool-call', state: 'call', toolCallId: 'tc1', toolName: 'search', args: {} }])
+    ).toBe(true)
+    expect(hasModelResponseContent([{ type: 'image', storageKey: 'image-key' }])).toBe(true)
   })
 })
 

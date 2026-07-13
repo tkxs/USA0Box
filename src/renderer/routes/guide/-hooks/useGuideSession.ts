@@ -159,6 +159,7 @@ export function useGuideSession(): UseGuideSessionReturn {
       !forceSelectionOnce &&
       shouldGuideEnterCompleted({
         onboardingCompleted,
+        isLoggedIn,
         hasValidConfig: configValid,
       })
 

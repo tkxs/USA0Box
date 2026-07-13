@@ -92,12 +92,15 @@ export function ProviderSettingsButton() {
   )
 }
 
-export function GroupKeySettingsButton() {
+export function GroupKeySettingsButton({ onOpen }: { onOpen?: () => void }) {
   return (
     <Flex mt="md" style={guideActionButtonWidthStyle}>
       <Button
         leftSection={<ScalableIcon icon={IconKey} size={18} />}
-        onClick={() => navigateToSettings('/provider')}
+        onClick={() => {
+          onOpen?.()
+          navigateToSettings('/provider')
+        }}
         variant="light"
         fullWidth
         h={42}

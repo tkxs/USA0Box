@@ -7,6 +7,7 @@ import type { GuideToolPart } from './types'
 
 interface ShouldGuideEnterCompletedInput {
   onboardingCompleted: boolean
+  isLoggedIn: boolean
   hasValidConfig: boolean
 }
 
@@ -15,11 +16,6 @@ interface ShouldGuideEnterCompletedInput {
  */
 export function checkHasValidConfig(): boolean {
   const settings = settingsStore.getState()
-
-  // Has valid license (same check as needEditSetting in settingActions.ts)
-  if (settings.licenseKey) {
-    return true
-  }
 
   // Has any provider with API key configured
   if (settings.providers && Object.keys(settings.providers).length > 0) {
@@ -50,7 +46,7 @@ export function checkHasValidConfig(): boolean {
  * Determine whether guide should directly enter completed state.
  */
 export function shouldGuideEnterCompleted(input: ShouldGuideEnterCompletedInput): boolean {
-  return input.onboardingCompleted || input.hasValidConfig
+  return input.onboardingCompleted || input.isLoggedIn || input.hasValidConfig
 }
 
 /**

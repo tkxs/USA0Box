@@ -1,5 +1,5 @@
 import { buildContext } from '@shared/context'
-import { ChatboxAIAPIError, OCRError } from '@shared/models/errors'
+import { ApiError, ChatboxAIAPIError, OCRError } from '@shared/models/errors'
 import type { ChatStreamOptions, ModelStreamPart } from '@shared/models/types'
 import { type Message, type MessageContentParts, ModelProviderEnum } from '@shared/types'
 import { getMessageText, sequenceMessages } from '@shared/utils/message'
@@ -22,7 +22,7 @@ import { createAttachmentResolver } from './attachment-resolver'
 import { applyLegacyToolFallback } from './legacy-tool-fallback'
 import { persistStreamingMessage, updateStreamingCache } from './messages'
 import { getOCRModel, ocrImagesInMessages } from './ocr-helper'
-import { createInitialState, processStreamChunk } from './stream-chunk-processor'
+import { createInitialState, hasModelResponseContent, processStreamChunk } from './stream-chunk-processor'
 import { buildToolsForSession } from './tools-builder'
 import {
   findTargetMessageIndex,
@@ -128,6 +128,14 @@ export async function orchestrateGeneration(
 
   try {
     const dependencies = await createModelDependencies()
+    if (!settings.provider || !settings.modelId) {
+      throw new ApiError('Select a model from a configured model group key before sending a message.')
+    }
+    if (settings.provider === ModelProviderEnum.ChatboxAI) {
+      throw new ApiError(
+        'This legacy model connection is no longer available. Select a model from a configured model group key.'
+      )
+    }
     const model = await createModel(settings, dependencies)
     const sessionKnowledgeBaseMap = uiStore.getState().sessionKnowledgeBaseMap
     const knowledgeBase = sessionKnowledgeBaseMap[sessionId]
@@ -272,6 +280,13 @@ export async function orchestrateGeneration(
       if (part.type === 'reasoning' && part.startTime && !part.duration) {
         part.duration = Date.now() - part.startTime
       }
+    }
+
+    if (!hasModelResponseContent(processorState.contentParts)) {
+      const finishReason = processorState.finishReason ? ` (finish reason: ${processorState.finishReason})` : ''
+      throw new ApiError(
+        `The selected model returned an empty response${finishReason}. Check that the model supports this provider's API protocol.`
+      )
     }
 
     targetMsg = {

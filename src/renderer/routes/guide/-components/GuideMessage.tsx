@@ -31,6 +31,7 @@ interface GuideMessageProps {
   onQuestionClick?: (question: string) => void
   onClaimStart?: () => void
   onClaimDetected?: (license: UserLicense) => void
+  onOpenGroupKeySettings?: () => void
   isLastMessage?: boolean
 }
 
@@ -44,6 +45,7 @@ function ToolPartRenderer({
   onQuestionClick,
   onClaimStart,
   onClaimDetected,
+  onOpenGroupKeySettings,
   disabled,
 }: {
   part: GuideToolPart
@@ -52,6 +54,7 @@ function ToolPartRenderer({
   onQuestionClick?: (question: string) => void
   onClaimStart?: () => void
   onClaimDetected?: (license: UserLicense) => void
+  onOpenGroupKeySettings?: () => void
   disabled?: boolean
 }) {
   switch (part.toolName) {
@@ -67,7 +70,7 @@ function ToolPartRenderer({
       return <ProviderSettingsButton />
 
     case 'show_group_key_settings_button':
-      return <GroupKeySettingsButton />
+      return <GroupKeySettingsButton onOpen={onOpenGroupKeySettings} />
 
     case 'show_new_chat_button': {
       const label = typeof part.result?.label === 'string' ? part.result.label : undefined
@@ -108,6 +111,7 @@ export function GuideMessage({
   onQuestionClick,
   onClaimStart,
   onClaimDetected,
+  onOpenGroupKeySettings,
   isLastMessage,
 }: GuideMessageProps) {
   const isUser = message.role === 'user'
@@ -200,6 +204,7 @@ export function GuideMessage({
                       onQuestionClick={onQuestionClick}
                       onClaimStart={onClaimStart}
                       onClaimDetected={onClaimDetected}
+                      onOpenGroupKeySettings={onOpenGroupKeySettings}
                       disabled={shouldDisable}
                     />
                   )

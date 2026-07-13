@@ -1,3 +1,4 @@
+import { usesOpenAIResponsesTransport } from '@shared/providers/utils'
 import type { ProviderModelInfo } from '@shared/types'
 import platform from '@/platform'
 import { authInfoStore } from '@/stores/authInfoStore'
@@ -156,6 +157,10 @@ export function getSub2APIGatewayUrl() {
   return getSub2APIApiBaseUrl().replace(/\/api\/v1$/, '')
 }
 
+export function inferSub2APIModelApiStyle(modelId: string): 'openai-responses' | undefined {
+  return usesOpenAIResponsesTransport({ modelId }) ? 'openai-responses' : undefined
+}
+
 export async function getSub2APIModels(apiKey: string): Promise<ProviderModelInfo[]> {
   const response = await fetchCrossPlatform(`${getSub2APIGatewayUrl()}/v1/models`, {
     method: 'GET',
@@ -172,11 +177,15 @@ export async function getSub2APIModels(apiKey: string): Promise<ProviderModelInf
     throw new Error(payload?.error?.message || payload?.message || `模型同步失败（${response.status}）`)
   }
   return (payload?.data || [])
-    .map((model) => ({
-      modelId: (model.id || model.name || '').replace(/^models\//, ''),
-      nickname: model.display_name,
-      type: 'chat' as const,
-    }))
+    .map((model) => {
+      const modelId = (model.id || model.name || '').replace(/^models\//, '')
+      return {
+        modelId,
+        nickname: model.display_name,
+        type: 'chat' as const,
+        apiStyle: inferSub2APIModelApiStyle(modelId),
+      }
+    })
     .filter((model) => !!model.modelId)
 }
 
