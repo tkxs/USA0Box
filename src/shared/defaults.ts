@@ -1,6 +1,14 @@
 import { v4 as uuidv4 } from 'uuid'
 import { type Config, ModelProviderEnum, type SessionSettings, type Settings, Theme } from './types'
 
+export const DEFAULT_CHAT_SESSION_NAME = '会话'
+export const LEGACY_DEFAULT_CHAT_SESSION_NAMES = ['零', 'Untitled'] as const
+export const LEGACY_DEFAULT_PROMPT = 'You are a helpful assistant.'
+
+export function isUnnamedChatSessionName(name: string) {
+  return name === DEFAULT_CHAT_SESSION_NAME || LEGACY_DEFAULT_CHAT_SESSION_NAMES.some((legacy) => legacy === name)
+}
+
 export function settings(): Settings {
   return {
     // aiProvider: ModelProviderEnum.OpenAI,
@@ -159,7 +167,7 @@ export function newConfigs(): Config {
 }
 
 export function getDefaultPrompt() {
-  return 'You are a helpful assistant.'
+  return '你是一个专业AI助手为用户解答各种问题'
 }
 
 export function chatSessionSettings(): SessionSettings {

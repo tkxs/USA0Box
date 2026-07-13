@@ -4,8 +4,8 @@ export const ANDROID_UPDATE_ASSET_NAME = 'ZeroBox-android-update.apk'
 export const ANDROID_UPDATE_URL = 'https://github.com/tkxs/USA0Box/releases/latest/download/ZeroBox-android-update.apk'
 
 interface MobileUpdaterPlugin {
-  startDownload(options: { url: string; fileName: string }): Promise<{ downloadId: number }>
-  getDownloadStatus(options: { downloadId: number }): Promise<{
+  startDownload(options: { url: string; fileName: string }): Promise<{ downloadId: string }>
+  getDownloadStatus(options: { downloadId: string }): Promise<{
     status: 'pending' | 'running' | 'paused' | 'successful' | 'failed' | 'unknown'
     downloaded: number
     total: number
@@ -23,7 +23,7 @@ export function getAndroidUpdateFileName(version: string) {
 }
 
 function wait(milliseconds: number) {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds))
+  return new Promise<void>((resolve) => globalThis.setTimeout(resolve, milliseconds))
 }
 
 export async function downloadAndInstallAndroidUpdate(

@@ -80,7 +80,7 @@ describe('settingsStore persistence', () => {
           isCustom: true,
         },
       ],
-      __version: 4,
+      __version: 5,
     }
 
     const { initSettingsStore, settingsStore } = await loadSettingsStoreModule(persistedSettings)
@@ -107,7 +107,7 @@ describe('settingsStore persistence', () => {
           apiKey: 'sk-claude',
         },
       },
-      __version: 4,
+      __version: 5,
     }
 
     const { initSettingsStore, settingsStore, mergeProviderSettings, mockStorage } =
@@ -145,7 +145,25 @@ describe('settingsStore persistence', () => {
           apiHost: 'https://api.openai.com',
         },
       },
+      __version: 5,
+    })
+  })
+
+  it('migrates the legacy default prompt without overwriting a custom prompt', async () => {
+    const legacyModule = await loadSettingsStoreModule({
+      defaultPrompt: 'You are a helpful assistant.',
       __version: 4,
     })
+
+    await legacyModule.initSettingsStore()
+    expect(legacyModule.settingsStore.getState().defaultPrompt).toBe('你是一个专业AI助手为用户解答各种问题')
+
+    const customModule = await loadSettingsStoreModule({
+      defaultPrompt: 'My custom prompt',
+      __version: 4,
+    })
+
+    await customModule.initSettingsStore()
+    expect(customModule.settingsStore.getState().defaultPrompt).toBe('My custom prompt')
   })
 })

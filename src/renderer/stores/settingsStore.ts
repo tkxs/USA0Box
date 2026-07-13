@@ -62,7 +62,7 @@ export const settingsStore = createStore<Settings & Action>()(
           },
           removeItem: async (name) => await storage.removeItem(name),
         })),
-        version: 4,
+        version: 5,
         partialize: (state) => {
           try {
             return SettingsSchema.parse(state)
@@ -95,6 +95,11 @@ export const settingsStore = createStore<Settings & Action>()(
                 settings.skills = defaults.settings().skills
               } else if (settings.skills.translationEnabled === undefined) {
                 settings.skills.translationEnabled = true
+              }
+            case 3:
+            case 4:
+              if (settings.defaultPrompt === defaults.LEGACY_DEFAULT_PROMPT) {
+                settings.defaultPrompt = defaults.getDefaultPrompt()
               }
             default:
               break

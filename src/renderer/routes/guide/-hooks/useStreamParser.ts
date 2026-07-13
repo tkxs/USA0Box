@@ -37,6 +37,7 @@ export async function parseStreamResponse(
   let accumulatedContent = ''
   const accumulatedParts: GuideMessagePart[] = []
   let buffer = ''
+  let streamFinished = false
   // Track tool calls by ID for accumulating args
   const toolCallArgsBuffer: Record<string, string> = {}
 
@@ -69,7 +70,7 @@ export async function parseStreamResponse(
     })
   }
 
-  while (true) {
+  while (!streamFinished) {
     const { done, value } = await reader.read()
     if (done) break
 
@@ -80,12 +81,16 @@ export async function parseStreamResponse(
 
     for (const line of lines) {
       const trimmedLine = line.trim()
-      if (!trimmedLine || trimmedLine === '[DONE]') continue
+      if (!trimmedLine) continue
 
       // Handle SSE format: "data: {...}"
       let jsonStr = trimmedLine
       if (trimmedLine.startsWith('data:')) {
         jsonStr = trimmedLine.slice(5).trim()
+      }
+      if (jsonStr === '[DONE]') {
+        streamFinished = true
+        break
       }
 
       try {
@@ -180,6 +185,10 @@ export async function parseStreamResponse(
         console.debug('Skipping non-JSON line:', trimmedLine)
       }
     }
+  }
+
+  if (streamFinished) {
+    await reader.cancel().catch(() => undefined)
   }
 
   // Mark streaming as complete

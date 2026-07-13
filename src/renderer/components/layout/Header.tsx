@@ -1,5 +1,6 @@
 import NiceModal from '@ebay/nice-modal-react'
 import { ActionIcon, Badge, Flex, Text, Tooltip } from '@mantine/core'
+import { isUnnamedChatSessionName } from '@shared/defaults'
 import type { Session } from '@shared/types'
 import { IconLayoutSidebarLeftExpand, IconMenu2, IconPencil } from '@tabler/icons-react'
 import clsx from 'clsx'
@@ -37,7 +38,7 @@ export default function Header(props: { session: Session }) {
       return
     }
 
-    if (currentSession.name === 'Untitled') {
+    if (isUnnamedChatSessionName(currentSession.name)) {
       scheduleGenerateNameAndThreadName(currentSession.id)
     } else if (!currentSession.threadName) {
       scheduleGenerateThreadName(currentSession.id)

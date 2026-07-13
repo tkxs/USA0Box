@@ -1,11 +1,10 @@
 import { Anchor, Box, Button, Container, Divider, Flex, Image, Progress, Stack, Text, Title } from '@mantine/core'
 import {
+  IconBrandGithub,
   IconChevronRight,
-  IconClipboard,
   IconFileText,
+  IconHistory,
   IconHome,
-  IconMail,
-  IconMessage2,
   IconPencil,
   IconRefresh,
 } from '@tabler/icons-react'
@@ -20,8 +19,15 @@ import platform from '@/platform'
 import iconPNG from '@/static/icon.png'
 import { installUpdate, requestMobileUpdateInstall, useUpdateStore } from '@/stores/updateStore'
 import { CHATBOX_BUILD_PLATFORM } from '@/variables'
+import {
+  ZEROBOX_HELP_CENTER_URL,
+  ZEROBOX_ISSUES_URL,
+  ZEROBOX_OFFICIAL_SITE_URL,
+  ZEROBOX_RELEASES_URL,
+  ZEROBOX_REPOSITORY_URL,
+} from './guide/-utils/help-content'
 
-const OFFICIAL_SITE_URL = 'https://usa0.top'
+const OFFICIAL_SITE_URL = ZEROBOX_OFFICIAL_SITE_URL
 
 export const Route = createFileRoute('/about')({
   component: RouteComponent,
@@ -78,15 +84,22 @@ function RouteComponent() {
               title={t('Official Site')}
               link={OFFICIAL_SITE_URL}
             />
-            <ListItem icon={<IconClipboard className="w-full h-full" />} title={t('Survey')} link={OFFICIAL_SITE_URL} />
-            <ListItem icon={<IconPencil className="w-full h-full" />} title={t('Feedback')} link={OFFICIAL_SITE_URL} />
             <ListItem
               icon={<IconFileText className="w-full h-full" />}
-              title={t('Changelog')}
-              link={OFFICIAL_SITE_URL}
+              title={t('Help Center')}
+              link={ZEROBOX_HELP_CENTER_URL}
             />
-            <ListItem icon={<IconMail className="w-full h-full" />} title={t('E-mail')} link={OFFICIAL_SITE_URL} />
-            <ListItem icon={<IconMessage2 className="w-full h-full" />} title={t('FAQs')} link={OFFICIAL_SITE_URL} />
+            <ListItem
+              icon={<IconHistory className="w-full h-full" />}
+              title={t('Changelog')}
+              link={ZEROBOX_RELEASES_URL}
+            />
+            <ListItem icon={<IconPencil className="w-full h-full" />} title={t('Feedback')} link={ZEROBOX_ISSUES_URL} />
+            <ListItem
+              icon={<IconBrandGithub className="w-full h-full" />}
+              title="GitHub"
+              link={ZEROBOX_REPOSITORY_URL}
+            />
           </List>
         </Stack>
       </Container>

@@ -50,13 +50,14 @@ public class MobileUpdaterPlugin extends Plugin {
         DownloadManager manager = (DownloadManager) getContext().getSystemService(Context.DOWNLOAD_SERVICE);
         long downloadId = manager.enqueue(request);
         JSObject result = new JSObject();
-        result.put("downloadId", downloadId);
+        // JSON numbers lose their Java Long type after crossing the JS bridge.
+        result.put("downloadId", Long.toString(downloadId));
         call.resolve(result);
     }
 
     @PluginMethod
     public void getDownloadStatus(PluginCall call) {
-        Long downloadId = call.getLong("downloadId");
+        Long downloadId = parseDownloadId(call.getData().opt("downloadId"));
         if (downloadId == null) {
             call.reject("Missing download id");
             return;
@@ -80,6 +81,26 @@ public class MobileUpdaterPlugin extends Plugin {
             result.put("reason", reason);
             call.resolve(result);
         }
+    }
+
+    static Long parseDownloadId(Object value) {
+        if (value instanceof Number) {
+            Number number = (Number) value;
+            long parsed = number.longValue();
+            if (parsed > 0 && number.doubleValue() == (double) parsed) {
+                return parsed;
+            }
+            return null;
+        }
+        if (value instanceof String) {
+            try {
+                long parsed = Long.parseLong((String) value);
+                return parsed > 0 ? parsed : null;
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        return null;
     }
 
     @PluginMethod

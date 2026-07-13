@@ -1,5 +1,6 @@
 import NiceModal from '@ebay/nice-modal-react'
 import { ActionIcon, Avatar, Box, Button, Divider, Flex, ScrollArea, Space, Stack, Text } from '@mantine/core'
+import { DEFAULT_CHAT_SESSION_NAME } from '@shared/defaults'
 import type { CopilotDetail, ImageSource, Session } from '@shared/types'
 import { IconChevronLeft, IconChevronRight, IconMessageCircle2Filled, IconX } from '@tabler/icons-react'
 import { createFileRoute, useRouterState } from '@tanstack/react-router'
@@ -94,7 +95,7 @@ function Index() {
         selectedCopilot?.avatar?.type === 'storage-key' ? selectedCopilot.avatar.storageKey : undefined,
       picUrl: selectedCopilot?.avatar?.type === 'url' ? selectedCopilot.avatar.url : selectedCopilot?.picUrl,
       backgroundImage: selectedCopilot?.backgroundImage,
-      name: selectedCopilot?.name || 'Untitled',
+      name: selectedCopilot?.name || DEFAULT_CHAT_SESSION_NAME,
       messages: selectedCopilot
         ? [
             {
@@ -129,7 +130,7 @@ function Index() {
         assistantAvatarKey: c.avatar?.type === 'storage-key' ? c.avatar.storageKey : undefined,
         picUrl: c.avatar?.type === 'url' ? c.avatar.url : c.picUrl,
         backgroundImage: c.backgroundImage,
-        name: c.name || 'Untitled',
+        name: c.name || DEFAULT_CHAT_SESSION_NAME,
         messages: [
           {
             id: uuidv4(),

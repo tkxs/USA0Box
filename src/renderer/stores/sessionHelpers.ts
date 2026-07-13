@@ -724,7 +724,7 @@ export function initEmptyChatSession(): Omit<Session, 'id'> {
   const settings = settingsStore.getState().getSettings()
   const { chat: lastUsedChatModel } = lastUsedModelStore.getState()
   const newSession: Omit<Session, 'id'> = {
-    name: 'Untitled',
+    name: defaults.DEFAULT_CHAT_SESSION_NAME,
     type: 'chat',
     messages: [],
     settings: {

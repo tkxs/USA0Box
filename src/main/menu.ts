@@ -203,9 +203,9 @@ export default class MenuBuilder {
       label: 'Help',
       submenu: [
         {
-          label: 'Learn More',
+          label: 'Official Site',
           click() {
-            shell.openExternal('https://github.com/tkxs/USA0Box')
+            shell.openExternal('https://usa0.top')
           },
         },
         {
@@ -294,9 +294,9 @@ export default class MenuBuilder {
         label: 'Help',
         submenu: [
           {
-            label: 'Learn More',
+            label: 'Official Site',
             click() {
-              shell.openExternal('https://github.com/tkxs/USA0Box')
+              shell.openExternal('https://usa0.top')
             },
           },
           {

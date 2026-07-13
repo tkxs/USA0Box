@@ -7,6 +7,8 @@ import { Box, Stack, Text, UnstyledButton } from '@mantine/core'
 import { IconSparkles } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 import { ScalableIcon } from '@/components/common/ScalableIcon'
+import { useSettingsStore } from '@/stores/settingsStore'
+import { getZeroBoxSuggestedQuestions } from '../-utils/help-content'
 
 interface SuggestedQuestionsProps {
   onQuestionClick: (question: string) => void
@@ -15,14 +17,8 @@ interface SuggestedQuestionsProps {
 
 export function SuggestedQuestions({ onQuestionClick, disabled }: SuggestedQuestionsProps) {
   const { t } = useTranslation()
-
-  const questions = [
-    t('I want to try Chatbox for free!'),
-    t('What is an API? Where to get it? How to connect?'),
-    t('What is the relationship between Chatbox and other model providers?'),
-    t('How do I switch to different models, like DeepSeek?'),
-    t('Where is the Knowledge Base feature?'),
-  ]
+  const language = useSettingsStore((state) => state.language)
+  const questions = getZeroBoxSuggestedQuestions(language)
 
   return (
     <Box mt="lg">

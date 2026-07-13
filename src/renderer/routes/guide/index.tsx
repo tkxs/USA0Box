@@ -45,6 +45,7 @@ import { useSettingsStore } from '@/stores/settingsStore'
 import { useUIStore } from '@/stores/uiStore'
 import { GuideMessage } from './-components/GuideMessage'
 import { useGuideSession } from './-hooks/useGuideSession'
+import { createGuideNavigationBlockerOptions } from './-utils/navigation-blocker'
 
 export const Route = createFileRoute('/guide/')({
   component: GuidePage,
@@ -129,6 +130,17 @@ function GuidePage() {
     await applyLanguageChange(languageToApply)
   }, [pendingLanguage, applyLanguageChange])
 
+  const blockerOptions = useMemo(
+    () =>
+      createGuideNavigationBlockerOptions(() => ({
+        isGuideInProgress,
+        hasValidConfig,
+        onboardingCompleted: onboardingStep === 'completed',
+        allowNavigation: allowSettingsNavigationRef.current,
+      })),
+    [isGuideInProgress, hasValidConfig, onboardingStep]
+  )
+
   // Auto-scroll to bottom when messages change or during streaming
   // biome-ignore lint/correctness/useExhaustiveDependencies: messages.length triggers scroll on new messages
   useEffect(() => {
@@ -165,10 +177,7 @@ function GuidePage() {
   }, [handleConfigComplete])
 
   // Block navigation if guide is in progress, user hasn't completed config, and guide not completed
-  const { proceed, reset, status } = useBlocker({
-    condition: () =>
-      isGuideInProgress && !hasValidConfig && onboardingStep !== 'completed' && !allowSettingsNavigationRef.current,
-  })
+  const { proceed, reset, status } = useBlocker(blockerOptions)
 
   const allowGroupKeySettingsNavigation = useCallback(() => {
     allowSettingsNavigationRef.current = true
@@ -265,7 +274,7 @@ function GuidePage() {
 
         <Flex align="center" gap="xxs" flex={1} {...(isSmallScreen ? { justify: 'center', pl: 28, pr: 8 } : {})}>
           <Title order={4} fz={!isSmallScreen ? 20 : undefined} lineClamp={1}>
-            {t('Getting Started')}
+            {t('Help')}
           </Title>
         </Flex>
 
@@ -450,8 +459,9 @@ function GuidePage() {
                 <Button
                   color="red"
                   onClick={() => {
+                    allowSettingsNavigationRef.current = true
                     clearSession()
-                    proceed()
+                    proceed?.()
                   }}
                 >
                   {t('Leave')}

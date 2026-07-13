@@ -31,13 +31,20 @@ describe('Android mobile update', () => {
   })
 
   it('downloads the package before opening the Android installer', async () => {
-    mocks.startDownload.mockResolvedValue({ downloadId: 42 })
-    mocks.getDownloadStatus.mockResolvedValue({
-      status: 'successful',
-      downloaded: 100,
-      total: 100,
-      reason: 0,
-    })
+    mocks.startDownload.mockResolvedValue({ downloadId: '42' })
+    mocks.getDownloadStatus
+      .mockResolvedValueOnce({
+        status: 'running',
+        downloaded: 25,
+        total: 100,
+        reason: 0,
+      })
+      .mockResolvedValue({
+        status: 'successful',
+        downloaded: 100,
+        total: 100,
+        reason: 0,
+      })
     mocks.install.mockResolvedValue({ permissionRequired: false })
     const progress = vi.fn()
 
@@ -49,6 +56,8 @@ describe('Android mobile update', () => {
       url: ANDROID_UPDATE_URL,
       fileName: 'ZeroBox-0.2.0-android-update.apk',
     })
+    expect(mocks.getDownloadStatus).toHaveBeenCalledWith({ downloadId: '42' })
+    expect(progress).toHaveBeenCalledWith(25)
     expect(progress).toHaveBeenLastCalledWith(100)
     expect(mocks.install).toHaveBeenCalledWith({ fileName: 'ZeroBox-0.2.0-android-update.apk' })
   })

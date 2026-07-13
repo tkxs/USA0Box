@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next'
 import { trackJkClickEvent } from '@/analytics/jk'
 import { JK_EVENTS, JK_PAGE_NAMES } from '@/analytics/jk-events'
 import { cancelConfetti, confetti } from '@/components/Confetti'
-import { buildChatboxUrl } from '@/packages/remote'
 import platform from '@/platform'
 import { authInfoStore, useAuthInfoStore } from '@/stores/authInfoStore'
 import { onboardingStore, useOnboardingStore } from '@/stores/onboardingStore'
@@ -16,6 +15,7 @@ import * as premiumActions from '@/stores/premiumActions'
 import { settingsStore, useSettingsStore } from '@/stores/settingsStore'
 import { GUIDE_CONFIG } from '../-utils/config'
 import { type GuideMessage, sendGuideMessage } from '../-utils/guideApi'
+import { getZeroBoxHelpIntroduction } from '../-utils/help-content'
 import type {
   GuideMessagePart,
   GuideToolPart,
@@ -165,11 +165,7 @@ export function useGuideSession(): UseGuideSessionReturn {
 
     if (enterCompleted) {
       // User already has valid config, show completion message
-      const configCompleteMsg = String(
-        t(
-          "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
-        )
-      )
+      const configCompleteMsg = getZeroBoxHelpIntroduction(language)
       setMessages([
         {
           id: generateMessageId(),
@@ -192,60 +188,7 @@ export function useGuideSession(): UseGuideSessionReturn {
         setHasValidConfig(false)
       }
       // Show initial greeting with cards using fast streaming
-      const isChinese = language.startsWith('zh')
-      const guideUrl = buildChatboxUrl('/redirect_app/guide')
-      const helpCenterUrl = buildChatboxUrl('/redirect_app/help_center')
-
-      const greeting = isChinese
-        ? [
-            t(`## 👋 Hey! I'm Boxy, your setup guide assistant.
-
-Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models including ChatGPT, Claude, DeepSeek, and more.
-
-### ✨ Key Features
-- 🔐 **Local First** — Your data stays on your device, ensuring privacy and security
-- 🎯 **Multi-Model Support** — One app, chat with all AI models
-- 📚 **Knowledge Base** — Let AI understand your private documents
-
-### 📖 Get Help
-- 🎬 [Xiaohongshu Setup Guide](https://www.xiaohongshu.com/user/profile/67b581b6000000000e01d11f) — Step-by-step tutorial (Recommended)
-- 📕 [Product Manual](`),
-            guideUrl,
-            t(`) — Detailed feature documentation
-- 🆘 [Help Center](`),
-            helpCenterUrl,
-            t(`) — FAQs
-- 📮 Contact us: https://github.com/tkxs/USA0Box/issues
-
-💡 Follow Chatbox on [Xiaohongshu](https://www.xiaohongshu.com/user/profile/67b581b6000000000e01d11f) for the latest updates and tips
-
----
-
-**Now, let me help you get set up!** First, tell me about your AI experience:`),
-          ].join('')
-        : [
-            t(`## 👋 Hey! I'm Boxy, your setup guide assistant.
-
-Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models including ChatGPT, Claude, DeepSeek, and more.
-
-### ✨ Key Features
-- 🔐 **Local First** — Your data stays on your device, ensuring privacy and security
-- 🎯 **Multi-Model Support** — One app, chat with all AI models
-- 📚 **Knowledge Base** — Let AI understand your private documents
-
-### 📖 Get Help
-- 📕 [Product Manual](`),
-            guideUrl,
-            t(`) — Detailed feature documentation
-- 🆘 [Help Center](`),
-            helpCenterUrl,
-            t(`) — FAQs
-- 📮 Contact us: https://github.com/tkxs/USA0Box/issues
-
----
-
-**Now, let me help you get set up!** First, tell me about your AI experience:`),
-          ].join('')
+      const greeting = getZeroBoxHelpIntroduction(language)
 
       // Stream greeting with fast speed
       const messageId = generateMessageId()
@@ -316,7 +259,7 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
         cancelled = true
       }
     }
-  }, [isLanguageReady, t, resetKey, onboardingCompleted, isLoggedIn, forceSelectionOnce])
+  }, [isLanguageReady, resetKey, onboardingCompleted, isLoggedIn, forceSelectionOnce, language])
 
   /**
    * Append a fixed message to the conversation (instant, no streaming)
@@ -567,19 +510,14 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
     if (hasLicense) {
       await renderCelebration()
     } else {
-      await streamFixedMessage(
-        t(
-          "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
-        ),
-        [
-          createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
-            label: String(t('Click here to start a new chat')),
-          }),
-          createSuggestedQuestionsToolPart(`suggested-${Date.now()}`),
-        ]
-      )
+      await streamFixedMessage(getZeroBoxHelpIntroduction(language), [
+        createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
+          label: String(t('Click here to start a new chat')),
+        }),
+        createSuggestedQuestionsToolPart(`suggested-${Date.now()}`),
+      ])
     }
-  }, [streamFixedMessage, t, renderCelebration])
+  }, [streamFixedMessage, t, renderCelebration, language])
 
   /**
    * Login is only the first step for SUB2API. The guide completes after the user
@@ -653,19 +591,14 @@ Chatbox is an **all-in-one AI chat client** that supports 30+ mainstream models 
       setHasValidConfig(true)
       onboardingStore.getState().markCompleted()
       setOnboardingStep('completed')
-      appendFixedMessage(
-        t(
-          "You've already completed the setup and can use Chatbox normally.\n\nIf you have any questions about Chatbox AI, feel free to ask me here."
-        ),
-        [
-          createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
-            label: String(t('Click here to start a new chat')),
-          }),
-          createSuggestedQuestionsToolPart(`suggested-${Date.now()}`),
-        ]
-      )
+      appendFixedMessage(getZeroBoxHelpIntroduction(language), [
+        createNewChatButtonToolPart(`new-chat-btn-${Date.now()}`, {
+          label: String(t('Click here to start a new chat')),
+        }),
+        createSuggestedQuestionsToolPart(`suggested-${Date.now()}`),
+      ])
     }
-  }, [hasValidConfig, appendFixedMessage, t])
+  }, [hasValidConfig, appendFixedMessage, t, language])
 
   /**
    * Send a free-form message to the backend API

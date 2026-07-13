@@ -85,6 +85,9 @@ vi.mock('@/stores/authInfoStore', () => ({
 vi.mock('./settingsStore', () => ({
   settingsStore: {
     getState: () => ({
+      getSettings: () => ({
+        defaultPrompt: '你是一个专业AI助手为用户解答各种问题',
+      }),
       licenseKey: licenseState.key,
       licenseActivationMethod: licenseActivationState.method,
       extension: {
@@ -132,6 +135,7 @@ vi.mock('@/stores/chatStore', () => ({
 }))
 
 import {
+  initEmptyChatSession,
   isSessionAttachmentRagAuthError,
   isSessionAttachmentRagIndexingError,
   prepareFileAttachment,
@@ -139,6 +143,19 @@ import {
   SESSION_ATTACHMENT_RAG_MAX_PARSED_BYTE_LENGTH,
   SESSION_ATTACHMENT_RAG_REQUIRES_CHATBOX_AI_ERROR,
 } from './sessionHelpers'
+
+describe('new chat defaults', () => {
+  it('uses the default conversation name and professional system prompt', () => {
+    const session = initEmptyChatSession()
+
+    expect(session.name).toBe('会话')
+    expect(session.messages).toHaveLength(1)
+    expect(session.messages[0]).toMatchObject({
+      role: 'system',
+      contentParts: [{ type: 'text', text: '你是一个专业AI助手为用户解答各种问题' }],
+    })
+  })
+})
 
 function createFile(name: string, content = 'binary-content'): File {
   const file = new File([content], name, { type: 'application/pdf', lastModified: 1700000000000 })

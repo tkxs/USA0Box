@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { chatSessionSettings, getDefaultPrompt, newConfigs, pictureSessionSettings, settings } from './defaults'
+import {
+  chatSessionSettings,
+  DEFAULT_CHAT_SESSION_NAME,
+  getDefaultPrompt,
+  isUnnamedChatSessionName,
+  newConfigs,
+  pictureSessionSettings,
+  settings,
+} from './defaults'
 import { ModelProviderEnum, type SessionSettings, type Settings, Theme } from './types'
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -56,7 +64,15 @@ describe('defaults', () => {
   })
 
   it('getDefaultPrompt() returns expected string', () => {
-    expect(getDefaultPrompt()).toBe('You are a helpful assistant.')
+    expect(DEFAULT_CHAT_SESSION_NAME).toBe('会话')
+    expect(getDefaultPrompt()).toBe('你是一个专业AI助手为用户解答各种问题')
+  })
+
+  it('only treats current and legacy default names as unnamed', () => {
+    expect(isUnnamedChatSessionName('会话')).toBe(true)
+    expect(isUnnamedChatSessionName('零')).toBe(true)
+    expect(isUnnamedChatSessionName('Untitled')).toBe(true)
+    expect(isUnnamedChatSessionName('我的会话')).toBe(false)
   })
 
   it('chatSessionSettings() waits for the user to select a configured group model', () => {
